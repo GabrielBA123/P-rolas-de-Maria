@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Painel — Pérolas de Maria</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Lora:wght@400;500&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<!-- ============ LOGIN SCREEN (visible by default) ============ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <h1>Pérolas de Maria</h1>
+    <p class="sub">Painel administrativo</p>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginEmail">E-mail</label>
+        <input type="email" id="loginEmail" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="loginPassword">Senha</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn-primary" id="loginBtn">Entrar</button>
+      <p class="form-msg" id="loginMsg"></p>
+    </form>
+    <button type="button" class="link-btn" id="forgotBtn">Esqueci minha senha</button>
+  </div>
+</div>
+
+<!-- ============ APP (hidden until a session is confirmed) ============ -->
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="topbar-brand"><h1>Pérolas de Maria</h1></div>
+    <div class="topbar-right">
+      <span class="admin-email" id="adminEmail"></span>
+      <button class="btn-ghost" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="stats-grid" id="statsGrid"><!-- filled by admin.js --></div>
+
+    <div class="toolbar">
+      <input type="text" class="search-box" id="searchBox" placeholder="Buscar por nome, telefone ou número do pedido...">
+    </div>
+    <div class="filter-tabs" id="filterTabs" style="margin-bottom:20px;">
+      <button class="filter-tab active" data-status="todos">Todos</button>
+      <button class="filter-tab" data-status="aguardando_pagamento">Aguardando pagamento</button>
+      <button class="filter-tab" data-status="pago">Pago</button>
+      <button class="filter-tab" data-status="preparacao">Preparação</button>
+      <button class="filter-tab" data-status="enviado">Enviado</button>
+      <button class="filter-tab" data-status="entregue">Entregue</button>
+      <button class="filter-tab" data-status="cancelado">Cancelado</button>
+    </div>
+
+    <div class="orders-wrap">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>Pedido</th>
+            <th>Data / hora</th>
+            <th>Cliente</th>
+            <th>Telefone</th>
+            <th>Itens</th>
+            <th>Total</th>
+            <th>Pagamento</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="ordersBody">
+          <!-- filled by admin.js -->
+        </tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none;">Nenhum pedido encontrado.</div>
+    </div>
+  </main>
+</div>
+
+<!-- ============ Order detail panel ============ -->
+<div class="detail-overlay" id="detailOverlay"></div>
+<aside class="detail-panel" id="detailPanel">
+  <div class="detail-head">
+    <div>
+      <h2 id="detailOrderNum">—</h2>
+      <span class="admin-email" id="detailOrderDate"></span>
+    </div>
+    <button class="detail-close" id="detailClose">✕</button>
+  </div>
+  <div class="detail-body" id="detailBody"><!-- filled by admin.js --></div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-client.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
