@@ -19,7 +19,7 @@
    ========================================================================== */
 
 const SUPABASE_URL = 'COLE_AQUI_A_URL_DO_SEU_PROJETO_SUPABASE';
-const SUPABASE_ANON_KEY = 'COLE_AQUI_A_ANON_KEY_DO_SEU_PROJETO_SUPABASE';
+const SUPABASE_ANON_KEY = 'https://ldjubhvkkrxbpgrcdnid.supabase.co';
 
 // True until you replace the two placeholders above with your real
 // Supabase project values. Other files (checkout.js, admin.js) check
