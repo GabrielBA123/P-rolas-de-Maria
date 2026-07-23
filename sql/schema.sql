@@ -238,7 +238,17 @@ create policy "admins can read order history"
 -- 7) Realtime — lets the admin dashboard show "🔔 Novo pedido recebido"
 --    the moment an order is inserted, without refreshing the page.
 -- --------------------------------------------------------------------------
-alter publication supabase_realtime add table public.orders;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'orders'
+  ) then
+    alter publication supabase_realtime add table public.orders;
+  end if;
+end $$;
 
 -- ==========================================================================
 -- Done. Next: Authentication → Users → Add user, to create your first
