@@ -18,8 +18,8 @@
    must stay on a server (this project doesn't use one, on purpose).
    ========================================================================== */
 
-const SUPABASE_URL = 'COLE_AQUI_A_URL_DO_SEU_PROJETO_SUPABASE';
-const SUPABASE_ANON_KEY = 'COLE_AQUI_A_ANON_KEY_DO_SEU_PROJETO_SUPABASE';
+const SUPABASE_URL = 'https://ldjubhvkkrxbpgrcdnid.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_jzaLV-9q_ANf4bftlPOMtg_471J_g9g';
 
 // True until you replace the two placeholders above with your real
 // Supabase project values. Other files (checkout.js, admin.js) check
