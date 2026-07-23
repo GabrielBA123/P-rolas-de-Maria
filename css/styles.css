@@ -239,6 +239,7 @@
     background:var(--cream);border:1px solid var(--line);border-radius:24px;
     padding:40px;box-shadow:var(--shadow);
   }
+  .product-card + .product-card{margin-top:40px;}
   .gallery-main{
     position:relative;border-radius:16px;overflow:hidden;aspect-ratio:1/1;
     border:1px solid var(--line);background:#fff;

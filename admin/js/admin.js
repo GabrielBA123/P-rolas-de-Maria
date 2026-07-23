@@ -299,6 +299,14 @@ async function openDetail(orderId){
       meta.emoji + ' ' + meta.label + '</button>';
   }).join('');
 
+  // Deleting is only offered for cancelled orders — everything else
+  // should stay in the history for the dashboard's totals to stay accurate.
+  const deleteSection = order.status === 'cancelado'
+    ? '<div class="detail-section">' +
+        '<button class="btn-danger" onclick="deleteOrder(\'' + order.id + '\')">🗑 Excluir pedido cancelado</button>' +
+      '</div>'
+    : '';
+
   document.getElementById('detailBody').innerHTML =
     '<div class="detail-section">' +
       '<h3>Cliente</h3>' +
@@ -320,12 +328,33 @@ async function openDetail(orderId){
     '<div class="detail-section">' +
       '<h3>Histórico</h3>' +
       '<div id="historyList">Carregando...</div>' +
-    '</div>';
+    '</div>' +
+    deleteSection;
 
   detailOverlay.classList.add('show');
   detailPanel.classList.add('show');
 
   loadHistory(orderId);
+}
+
+async function deleteOrder(orderId){
+  const order = allOrders.find(function(o){ return o.id === orderId; });
+  if(!order) return;
+
+  const confirmed = window.confirm(
+    'Excluir o pedido ' + formatOrderNumber(order.order_number) + ' permanentemente? Essa ação não pode ser desfeita.'
+  );
+  if(!confirmed) return;
+
+  const { error } = await sb.from('orders').delete().eq('id', orderId);
+  if(error){
+    showToast('Erro ao excluir pedido.');
+    console.error(error);
+    return;
+  }
+  showToast('Pedido excluído.');
+  closeDetail();
+  await loadOrders();
 }
 
 async function loadHistory(orderId){

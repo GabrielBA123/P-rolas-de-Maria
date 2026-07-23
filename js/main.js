@@ -23,28 +23,6 @@ document.querySelectorAll('.bead-divider').forEach(function(el){
   }
 });
 
-// ---------- product / gallery ----------
-var PRODUCT = {
-  id: 'terco-aparecida',
-  name: 'Terço Nossa Senhora Aparecida',
-  price: 39.90,
-  img: 'assets/images/terco-aparecida-1.jpg'
-};
-
-document.querySelectorAll('.gallery-thumbs img').forEach(function(t){
-  t.addEventListener('click', function(){
-    document.getElementById('mainImg').src = t.dataset.full;
-    document.querySelectorAll('.gallery-thumbs img').forEach(function(x){x.classList.remove('active');});
-    t.classList.add('active');
-  });
-});
-
-var qty = 1;
-function changeQty(delta){
-  qty = Math.max(1, qty + delta);
-  document.getElementById('qtyDisplay').textContent = qty;
-}
-
 // ---------- cart state (in-memory — lives only for this page visit) ----------
 var cart = [];
 
@@ -52,19 +30,55 @@ function formatBRL(v){
   return 'R$ ' + v.toFixed(2).replace('.', ',');
 }
 
-function addToCart(){
-  var existing = cart.find(function(i){return i.id === PRODUCT.id;});
-  if(existing){ existing.qty += qty; }
-  else { cart.push({id:PRODUCT.id, name:PRODUCT.name, price:PRODUCT.price, img:PRODUCT.img, qty:qty}); }
-  renderCart();
-  showToast('Adicionado ao carrinho');
-  var btn = document.getElementById('addCartBtn');
-  btn.classList.add('added');
-  btn.textContent = 'Adicionado ✦';
-  setTimeout(function(){ btn.classList.remove('added'); btn.textContent='Adicionar ao carrinho'; }, 1400);
-  qty = 1;
-  document.getElementById('qtyDisplay').textContent = qty;
-}
+// ---------- products / gallery / add-to-cart ----------
+// Works for any number of `.product-card[data-product-id]` blocks in the
+// page — each card carries its own name/price in data attributes, so
+// adding a new terço is just adding another card in index.html, no JS
+// changes needed.
+document.querySelectorAll('.product-card[data-product-id]').forEach(function(card){
+  var qty = 1;
+  var qtyDisplay = card.querySelector('.qty-display');
+  var mainImg = card.querySelector('.main-img');
+  var defaultImg = mainImg.getAttribute('src'); // cart thumbnail always uses the cover photo, even if the visitor is browsing other gallery views
+
+  card.querySelectorAll('.gallery-thumbs img').forEach(function(t){
+    t.addEventListener('click', function(){
+      mainImg.src = t.dataset.full;
+      card.querySelectorAll('.gallery-thumbs img').forEach(function(x){x.classList.remove('active');});
+      t.classList.add('active');
+    });
+  });
+
+  card.querySelector('.qty-minus').addEventListener('click', function(){
+    qty = Math.max(1, qty - 1);
+    qtyDisplay.textContent = qty;
+  });
+  card.querySelector('.qty-plus').addEventListener('click', function(){
+    qty = qty + 1;
+    qtyDisplay.textContent = qty;
+  });
+
+  card.querySelector('.add-cart-btn').addEventListener('click', function(){
+    var id = card.dataset.productId;
+    var name = card.dataset.productName;
+    var price = parseFloat(card.dataset.productPrice);
+
+    var existing = cart.find(function(i){ return i.id === id; });
+    if(existing){ existing.qty += qty; }
+    else { cart.push({ id: id, name: name, price: price, img: defaultImg, qty: qty }); }
+
+    renderCart();
+    showToast('Adicionado ao carrinho');
+
+    var btn = card.querySelector('.add-cart-btn');
+    btn.classList.add('added');
+    btn.textContent = 'Adicionado ✦';
+    setTimeout(function(){ btn.classList.remove('added'); btn.textContent = 'Adicionar ao carrinho'; }, 1400);
+
+    qty = 1;
+    qtyDisplay.textContent = qty;
+  });
+});
 
 function removeFromCart(id){
   cart = cart.filter(function(i){return i.id !== id;});

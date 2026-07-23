@@ -98,10 +98,10 @@
     <p>Contas de pérola, entremeio esmaltado e crucifixo dourado — cada detalhe escolhido para durar e abençoar.</p>
   </div>
 
-  <div class="product-card" data-product-id="terco-aparecida">
+  <div class="product-card" data-product-id="terco-aparecida" data-product-name="Terço Nossa Senhora Aparecida" data-product-price="39.90">
     <div class="gallery">
       <div class="gallery-main">
-        <img id="mainImg" src="assets/images/terco-aparecida-1.jpg" alt="Terço Nossa Senhora Aparecida">
+        <img class="main-img" src="assets/images/terco-aparecida-1.jpg" alt="Terço Nossa Senhora Aparecida">
       </div>
       <div class="gallery-thumbs">
         <img class="active" data-full="assets/images/terco-aparecida-1.jpg" src="assets/images/terco-aparecida-1.jpg" alt="Vista 1">
@@ -129,11 +129,11 @@
       </div>
       <div class="qty-row">
         <div class="qty-stepper">
-          <button onclick="changeQty(-1)">–</button>
-          <span id="qtyDisplay">1</span>
-          <button onclick="changeQty(1)">+</button>
+          <button class="qty-minus">–</button>
+          <span class="qty-display">1</span>
+          <button class="qty-plus">+</button>
         </div>
-        <button class="add-cart-btn" id="addCartBtn" onclick="addToCart()">Adicionar ao carrinho</button>
+        <button class="add-cart-btn">Adicionar ao carrinho</button>
       </div>
       <div class="ship-note">
         <span>✦</span>
@@ -141,8 +141,229 @@
       </div>
     </div>
   </div>
-</section>
 
+  <div class="product-card" data-product-id="terco-flores-de-jesus" data-product-name="Terço Flores de Jesus" data-product-price="19.90">
+    <div class="gallery">
+      <div class="gallery-main">
+        <img class="main-img" src="assets/images/flores-de-jesus-1.jpg" alt="Terço Flores de Jesus">
+      </div>
+      <div class="gallery-thumbs">
+        <img class="active" data-full="assets/images/flores-de-jesus-1.jpg" src="assets/images/flores-de-jesus-1.jpg" alt="Vista 1">
+        <img data-full="assets/images/flores-de-jesus-2.jpg" src="assets/images/flores-de-jesus-2.jpg" alt="Vista 2">
+        <img data-full="assets/images/flores-de-jesus-3.jpg" src="assets/images/flores-de-jesus-3.jpg" alt="Vista 3">
+      </div>
+    </div>
+    <div class="product-info">
+      <span class="eyebrow">Modelo personalizado</span>
+      <h3>Terço Flores de Jesus</h3>
+      <div class="stars">★★★★★</div>
+      <div class="product-desc">
+        Contas de pérola branca com Pai Nosso florzinha, entremeio prateado e crucifixo em resina branca com detalhes dourados. Um exemplo pronto do terço personalizado simples — dá pra pedir com outra cor de conta e outro santo(a) no entremeio.
+      </div>
+      <div class="price-row">
+        <span class="price">R$ 19,90</span>
+        <span class="price-note">à vista no Pix</span>
+      </div>
+      <div class="qty-row">
+        <div class="qty-stepper">
+          <button class="qty-minus">–</button>
+          <span class="qty-display">1</span>
+          <button class="qty-plus">+</button>
+        </div>
+        <button class="add-cart-btn">Adicionar ao carrinho</button>
+      </div>
+      <div class="ship-note">
+        <span>✦</span>
+        <span>Peça artesanal — pequenas variações entre peças fazem parte da produção manual. Quer trocar a cor ou o santo(a)? Use o personalizador mais abaixo.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="product-card" data-product-id="terco-sao-miguel" data-product-name="Terço de São Miguel" data-product-price="19.90">
+    <div class="gallery">
+      <div class="gallery-main">
+        <img class="main-img" src="assets/images/sao-miguel-1.jpg" alt="Terço de São Miguel">
+      </div>
+      <div class="gallery-thumbs">
+        <img class="active" data-full="assets/images/sao-miguel-1.jpg" src="assets/images/sao-miguel-1.jpg" alt="Vista 1">
+        <img data-full="assets/images/sao-miguel-2.jpg" src="assets/images/sao-miguel-2.jpg" alt="Vista 2">
+        <img data-full="assets/images/sao-miguel-3.jpg" src="assets/images/sao-miguel-3.jpg" alt="Vista 3">
+      </div>
+    </div>
+    <div class="product-info">
+      <span class="eyebrow">Modelo personalizado</span>
+      <h3>Terço de São Miguel</h3>
+      <div class="stars">★★★★★</div>
+      <div class="product-desc">
+        Contas em vermelho com detalhes em cristal facetado, entremeio de São Miguel Arcanjo e crucifixo dourado com detalhes brancos. Outro exemplo pronto do terço personalizado simples.
+      </div>
+      <div class="price-row">
+        <span class="price">R$ 19,90</span>
+        <span class="price-note">à vista no Pix</span>
+      </div>
+      <div class="qty-row">
+        <div class="qty-stepper">
+          <button class="qty-minus">–</button>
+          <span class="qty-display">1</span>
+          <button class="qty-plus">+</button>
+        </div>
+        <button class="add-cart-btn">Adicionar ao carrinho</button>
+      </div>
+      <div class="ship-note">
+        <span>✦</span>
+        <span>Peça artesanal — pequenas variações entre peças fazem parte da produção manual. Quer trocar a cor ou o santo(a)? Use o personalizador mais abaixo.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="product-card" data-product-id="terco-sagrada-familia" data-product-name="Terço Sagrada Família" data-product-price="29.90">
+    <div class="gallery">
+      <div class="gallery-main">
+        <img class="main-img" src="assets/images/sagrada-familia-1.jpg" alt="Terço Sagrada Família">
+      </div>
+      <div class="gallery-thumbs">
+        <img class="active" data-full="assets/images/sagrada-familia-1.jpg" src="assets/images/sagrada-familia-1.jpg" alt="Vista 1">
+        <img data-full="assets/images/sagrada-familia-2.jpg" src="assets/images/sagrada-familia-2.jpg" alt="Vista 2">
+        <img data-full="assets/images/sagrada-familia-3.jpg" src="assets/images/sagrada-familia-3.jpg" alt="Vista 3">
+      </div>
+    </div>
+    <div class="product-info">
+      <span class="eyebrow">Modelo · só pérolas de Pai Nosso</span>
+      <h3>Terço Sagrada Família</h3>
+      <div class="stars">★★★★★</div>
+      <div class="product-desc">
+        Terço todo em pérolas no estilo Pai Nosso, com rosas brancas de acabamento, entremeio da Sagrada Família e crucifixo prateado. Exemplo pronto da versão "só de pérolas de Pai Nosso".
+      </div>
+      <div class="price-row">
+        <span class="price">R$ 29,90</span>
+        <span class="price-note">à vista no Pix</span>
+      </div>
+      <div class="qty-row">
+        <div class="qty-stepper">
+          <button class="qty-minus">–</button>
+          <span class="qty-display">1</span>
+          <button class="qty-plus">+</button>
+        </div>
+        <button class="add-cart-btn">Adicionar ao carrinho</button>
+      </div>
+      <div class="ship-note">
+        <span>✦</span>
+        <span>Peça artesanal — pequenas variações entre peças fazem parte da produção manual. Quer outro santo(a) no entremeio? Use o personalizador mais abaixo.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="product-card" data-product-id="terco-sagrado-coracao" data-product-name="Terço Sagrado Coração de Jesus" data-product-price="19.90">
+    <div class="gallery">
+      <div class="gallery-main">
+        <img class="main-img" src="assets/images/sagrado-coracao-1.jpg" alt="Terço Sagrado Coração de Jesus">
+      </div>
+      <div class="gallery-thumbs">
+        <img class="active" data-full="assets/images/sagrado-coracao-1.jpg" src="assets/images/sagrado-coracao-1.jpg" alt="Vista 1">
+        <img data-full="assets/images/sagrado-coracao-2.jpg" src="assets/images/sagrado-coracao-2.jpg" alt="Vista 2">
+        <img data-full="assets/images/sagrado-coracao-3.jpg" src="assets/images/sagrado-coracao-3.jpg" alt="Vista 3">
+      </div>
+    </div>
+    <div class="product-info">
+      <span class="eyebrow">Modelo personalizado</span>
+      <h3>Terço Sagrado Coração de Jesus</h3>
+      <div class="stars">★★★★★</div>
+      <div class="product-desc">
+        Contas em vermelho intercaladas com esferas douradas, Pai Nosso em rosa branca, entremeio do Sagrado Coração de Jesus e crucifixo branco com detalhes dourados. Mais um exemplo pronto do terço personalizado simples.
+      </div>
+      <div class="price-row">
+        <span class="price">R$ 19,90</span>
+        <span class="price-note">à vista no Pix</span>
+      </div>
+      <div class="qty-row">
+        <div class="qty-stepper">
+          <button class="qty-minus">–</button>
+          <span class="qty-display">1</span>
+          <button class="qty-plus">+</button>
+        </div>
+        <button class="add-cart-btn">Adicionar ao carrinho</button>
+      </div>
+      <div class="ship-note">
+        <span>✦</span>
+        <span>Peça artesanal — pequenas variações entre peças fazem parte da produção manual. Quer trocar a cor ou o santo(a)? Use o personalizador mais abaixo.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="product-card" data-product-id="terco-nsra-gracas" data-product-name="Terço Nossa Senhora das Graças" data-product-price="19.90">
+    <div class="gallery">
+      <div class="gallery-main">
+        <img class="main-img" src="assets/images/nsra-gracas-1.jpg" alt="Terço Nossa Senhora das Graças">
+      </div>
+      <div class="gallery-thumbs">
+        <img class="active" data-full="assets/images/nsra-gracas-1.jpg" src="assets/images/nsra-gracas-1.jpg" alt="Vista 1">
+        <img data-full="assets/images/nsra-gracas-2.jpg" src="assets/images/nsra-gracas-2.jpg" alt="Vista 2">
+        <img data-full="assets/images/nsra-gracas-3.jpg" src="assets/images/nsra-gracas-3.jpg" alt="Vista 3">
+      </div>
+    </div>
+    <div class="product-info">
+      <span class="eyebrow">Modelo personalizado</span>
+      <h3>Terço Nossa Senhora das Graças</h3>
+      <div class="stars">★★★★★</div>
+      <div class="product-desc">
+        Contas de pérola branca, Pai Nosso em rosa branca, entremeio de Nossa Senhora das Graças e crucifixo branco com detalhes dourados. Outro exemplo pronto do terço personalizado simples.
+      </div>
+      <div class="price-row">
+        <span class="price">R$ 19,90</span>
+        <span class="price-note">à vista no Pix</span>
+      </div>
+      <div class="qty-row">
+        <div class="qty-stepper">
+          <button class="qty-minus">–</button>
+          <span class="qty-display">1</span>
+          <button class="qty-plus">+</button>
+        </div>
+        <button class="add-cart-btn">Adicionar ao carrinho</button>
+      </div>
+      <div class="ship-note">
+        <span>✦</span>
+        <span>Peça artesanal — pequenas variações entre peças fazem parte da produção manual. Quer trocar a cor ou o santo(a)? Use o personalizador mais abaixo.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="product-card" data-product-id="terco-guadalupe" data-product-name="Terço Nossa Senhora de Guadalupe" data-product-price="29.90">
+    <div class="gallery">
+      <div class="gallery-main">
+        <img class="main-img" src="assets/images/guadalupe-1.jpg" alt="Terço Nossa Senhora de Guadalupe">
+      </div>
+      <div class="gallery-thumbs">
+        <img class="active" data-full="assets/images/guadalupe-1.jpg" src="assets/images/guadalupe-1.jpg" alt="Vista 1">
+        <img data-full="assets/images/guadalupe-2.jpg" src="assets/images/guadalupe-2.jpg" alt="Vista 2">
+        <img data-full="assets/images/guadalupe-3.jpg" src="assets/images/guadalupe-3.jpg" alt="Vista 3">
+      </div>
+    </div>
+    <div class="product-info">
+      <span class="eyebrow">Modelo · só pérolas de Pai Nosso</span>
+      <h3>Terço Nossa Senhora de Guadalupe</h3>
+      <div class="stars">★★★★★</div>
+      <div class="product-desc">
+        Terço todo em contas de rosa branca (estilo Pai Nosso), entremeio de Nossa Senhora de Guadalupe e crucifixo branco com detalhes prateados. Exemplo pronto da versão "só de pérolas de Pai Nosso".
+      </div>
+      <div class="price-row">
+        <span class="price">R$ 29,90</span>
+        <span class="price-note">à vista no Pix</span>
+      </div>
+      <div class="qty-row">
+        <div class="qty-stepper">
+          <button class="qty-minus">–</button>
+          <span class="qty-display">1</span>
+          <button class="qty-plus">+</button>
+        </div>
+        <button class="add-cart-btn">Adicionar ao carrinho</button>
+      </div>
+      <div class="ship-note">
+        <span>✦</span>
+        <span>Peça artesanal — pequenas variações entre peças fazem parte da produção manual. Quer outro santo(a) no entremeio? Use o personalizador mais abaixo.</span>
+      </div>
+    </div>
+  </div>
+</section>
 <div class="bead-divider"></div>
 
 <section id="personalizados">
@@ -327,13 +548,13 @@
     </div>
 
     <div class="field">
-      <label for="buyerAddress">Endereço de entrega</label>
+      <label for="buyerAddress">Endereço</label>
       <input type="text" id="buyerAddress" placeholder="Rua, número, bairro, cidade" required>
     </div>
 
     <div class="field">
-      <label for="buyerNotes">Observações (opcional)</label>
-      <input type="text" id="buyerNotes" placeholder="Ex: horário para receber, ponto de referência...">
+      <label for="buyerNotes">Observações</label>
+      <input type="text" id="buyerNotes" placeholder="Observações sobre o pedido">
     </div>
 
     <div class="modal-order-summary" id="modalSummary"></div>
