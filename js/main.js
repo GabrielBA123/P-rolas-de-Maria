@@ -299,6 +299,48 @@ function showToast(text){
   setTimeout(function(){ t.classList.remove('show'); }, 2000);
 }
 
+// ---------- example gallery lightbox (click a card, see all 3 photos) ----------
+var lightboxOverlay = document.getElementById('lightboxOverlay');
+var lightboxMainImg = document.getElementById('lightboxMainImg');
+var lightboxThumbs = document.getElementById('lightboxThumbs');
+var lightboxTitle = document.getElementById('lightboxTitle');
+
+document.querySelectorAll('.example-card').forEach(function(card){
+  card.addEventListener('click', function(){
+    var images = card.dataset.images.split(',');
+    var name = card.dataset.name;
+
+    lightboxTitle.textContent = name;
+    lightboxMainImg.src = images[0];
+    lightboxMainImg.alt = name;
+
+    lightboxThumbs.innerHTML = images.map(function(src, i){
+      return '<img src="' + src + '" alt="' + name + ' — foto ' + (i+1) + '" class="' + (i===0 ? 'active' : '') + '">';
+    }).join('');
+
+    lightboxThumbs.querySelectorAll('img').forEach(function(thumb){
+      thumb.addEventListener('click', function(){
+        lightboxMainImg.src = thumb.getAttribute('src');
+        lightboxThumbs.querySelectorAll('img').forEach(function(t){ t.classList.remove('active'); });
+        thumb.classList.add('active');
+      });
+    });
+
+    lightboxOverlay.classList.add('show');
+  });
+});
+
+function closeLightbox(){
+  lightboxOverlay.classList.remove('show');
+}
+document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+lightboxOverlay.addEventListener('click', function(e){
+  if(e.target === lightboxOverlay) closeLightbox();
+});
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') closeLightbox();
+});
+
 renderCart();
 
 // ---------- theme toggle (light / dark) ----------

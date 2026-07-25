@@ -457,9 +457,17 @@
   }
   .example-card{
     background:var(--paper);border:1px solid var(--line);border-radius:16px;
-    overflow:hidden;box-shadow:var(--shadow);
+    overflow:hidden;box-shadow:var(--shadow);cursor:pointer;position:relative;
+    transition:transform .2s;
   }
+  .example-card:hover{transform:translateY(-3px);}
   .example-card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;}
+  .example-zoom{
+    position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;
+    background:rgba(20,17,10,.55);color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:.9rem;opacity:0;transition:.2s;pointer-events:none;
+  }
+  .example-card:hover .example-zoom{opacity:1;}
   .example-info{padding:12px 14px;text-align:center;}
   .example-info h4{
     font-family:'Cormorant Garamond',serif;font-size:1.05rem;color:var(--heading);
@@ -469,6 +477,35 @@
     font-family:'Jost',sans-serif;font-size:.7rem;color:var(--gold);
     text-transform:uppercase;letter-spacing:.04em;
   }
+
+  /* ---------- Lightbox (enlarge example photos) ---------- */
+  .lightbox-overlay{
+    position:fixed;inset:0;background:rgba(15,12,8,.86);z-index:80;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+    opacity:0;pointer-events:none;transition:.25s;
+  }
+  .lightbox-overlay.show{opacity:1;pointer-events:auto;}
+  .lightbox{
+    background:var(--paper);border-radius:20px;max-width:520px;width:100%;
+    padding:24px;position:relative;box-shadow:var(--shadow);
+    max-height:90vh;overflow-y:auto;
+  }
+  .lightbox-close{
+    position:absolute;top:16px;right:18px;background:none;border:none;
+    font-size:1.3rem;color:var(--ink-soft);z-index:2;
+  }
+  .lightbox h3{font-size:1.4rem;margin-bottom:14px;padding-right:30px;}
+  .lightbox-main{
+    border-radius:14px;overflow:hidden;border:1px solid var(--line);
+    aspect-ratio:1/1;background:#fff;
+  }
+  .lightbox-main img{width:100%;height:100%;object-fit:cover;display:block;}
+  .lightbox-thumbs{display:flex;gap:10px;margin-top:12px;}
+  .lightbox-thumbs img{
+    width:66px;height:66px;object-fit:cover;border-radius:10px;cursor:pointer;
+    border:2px solid transparent;opacity:.65;transition:.2s;
+  }
+  .lightbox-thumbs img.active{border-color:var(--gold);opacity:1;}
 
   .custom-wrap{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start;}
   .custom-card{

@@ -207,43 +207,49 @@
     <p>Esses terços abaixo não são vendidos como estão — são exemplos reais do que já fizemos, pra te ajudar a escolher a cor, o estilo e imaginar o resultado. Monte a sua combinação no personalizador logo abaixo.</p>
   </div>
   <div class="examples-grid">
-        <div class="example-card">
+        <div class="example-card" data-images="assets/images/flores-de-jesus-1.jpg,assets/images/flores-de-jesus-2.jpg,assets/images/flores-de-jesus-3.jpg" data-name="Terço Flores de Jesus">
           <img src="assets/images/flores-de-jesus-1.jpg" alt="Terço Flores de Jesus" loading="lazy">
+          <div class="example-zoom">🔍</div>
           <div class="example-info">
             <h4>Terço Flores de Jesus</h4>
             <span class="example-tag">simples · R$ 19,90</span>
           </div>
         </div>
-        <div class="example-card">
+        <div class="example-card" data-images="assets/images/sao-miguel-1.jpg,assets/images/sao-miguel-2.jpg,assets/images/sao-miguel-3.jpg" data-name="Terço de São Miguel">
           <img src="assets/images/sao-miguel-1.jpg" alt="Terço de São Miguel" loading="lazy">
+          <div class="example-zoom">🔍</div>
           <div class="example-info">
             <h4>Terço de São Miguel</h4>
             <span class="example-tag">simples · R$ 19,90</span>
           </div>
         </div>
-        <div class="example-card">
+        <div class="example-card" data-images="assets/images/sagrada-familia-1.jpg,assets/images/sagrada-familia-2.jpg,assets/images/sagrada-familia-3.jpg" data-name="Terço Sagrada Família">
           <img src="assets/images/sagrada-familia-1.jpg" alt="Terço Sagrada Família" loading="lazy">
+          <div class="example-zoom">🔍</div>
           <div class="example-info">
             <h4>Terço Sagrada Família</h4>
             <span class="example-tag">só pai nosso · R$ 29,90</span>
           </div>
         </div>
-        <div class="example-card">
+        <div class="example-card" data-images="assets/images/sagrado-coracao-1.jpg,assets/images/sagrado-coracao-2.jpg,assets/images/sagrado-coracao-3.jpg" data-name="Terço Sagrado Coração de Jesus">
           <img src="assets/images/sagrado-coracao-1.jpg" alt="Terço Sagrado Coração de Jesus" loading="lazy">
+          <div class="example-zoom">🔍</div>
           <div class="example-info">
             <h4>Terço Sagrado Coração de Jesus</h4>
             <span class="example-tag">simples · R$ 19,90</span>
           </div>
         </div>
-        <div class="example-card">
+        <div class="example-card" data-images="assets/images/nsra-gracas-1.jpg,assets/images/nsra-gracas-2.jpg,assets/images/nsra-gracas-3.jpg" data-name="Terço Nossa Senhora das Graças">
           <img src="assets/images/nsra-gracas-1.jpg" alt="Terço Nossa Senhora das Graças" loading="lazy">
+          <div class="example-zoom">🔍</div>
           <div class="example-info">
             <h4>Terço Nossa Senhora das Graças</h4>
             <span class="example-tag">simples · R$ 19,90</span>
           </div>
         </div>
-        <div class="example-card">
+        <div class="example-card" data-images="assets/images/guadalupe-1.jpg,assets/images/guadalupe-2.jpg,assets/images/guadalupe-3.jpg" data-name="Terço Nossa Senhora de Guadalupe">
           <img src="assets/images/guadalupe-1.jpg" alt="Terço Nossa Senhora de Guadalupe" loading="lazy">
+          <div class="example-zoom">🔍</div>
           <div class="example-info">
             <h4>Terço Nossa Senhora de Guadalupe</h4>
             <span class="example-tag">só pai nosso · R$ 29,90</span>
@@ -459,6 +465,16 @@
     </div>
 
     <button class="whats-btn" id="whatsBtn" onclick="finalizarPedido()">Enviar pedido no WhatsApp</button>
+  </div>
+</div>
+
+<!-- Lightbox: enlarges the 3 photos of an example terço when its card is clicked -->
+<div class="lightbox-overlay" id="lightboxOverlay">
+  <div class="lightbox">
+    <button class="lightbox-close" id="lightboxClose">✕</button>
+    <h3 id="lightboxTitle"></h3>
+    <div class="lightbox-main"><img id="lightboxMainImg" src="" alt=""></div>
+    <div class="lightbox-thumbs" id="lightboxThumbs"></div>
   </div>
 </div>
 
