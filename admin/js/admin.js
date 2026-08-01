@@ -282,8 +282,10 @@ async function openDetail(orderId){
       const d = i.details;
       const parts = [];
       if(d.tipoLabel) parts.push(d.tipoLabel);
+      if(d.tamanho) parts.push(d.tamanho);
       if(d.cor) parts.push('cor ' + d.cor);
       if(d.estilo) parts.push('Pai Nosso ' + d.estilo);
+      if(d.nomePersonalizado) parts.push('nome: "' + d.nomePersonalizado + '"');
       if(d.entremeio) parts.push('entremeio: ' + d.entremeio);
       detailsLine = '<div class="meta">' + escapeHtml(parts.join(' · ')) + '</div>';
     }

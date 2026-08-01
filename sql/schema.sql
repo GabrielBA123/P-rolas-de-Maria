@@ -250,6 +250,75 @@ begin
   end if;
 end $$;
 
+-- --------------------------------------------------------------------------
+-- 8) CALCULADORA DE PREÇO — internal tool, /admin only. Customers and the
+--    public site never touch these tables, so there is no anon policy at
+--    all here (default-deny — only logged-in admins can read or write).
+-- --------------------------------------------------------------------------
+
+-- one row per material, seeded below — edit the unit_cost values in the
+-- admin UI, don't add/remove rows there (the app expects exactly these 6)
+create table if not exists public.price_materials (
+  id         uuid primary key default gen_random_uuid(),
+  key        text unique not null check (key in ('perolas','crucifixo','entremeio','fio','embalagem','outros')),
+  label      text not null,
+  unit_cost  numeric(10,4) not null default 0 check (unit_cost >= 0),
+  updated_at timestamptz not null default now()
+);
+
+insert into public.price_materials (key, label) values
+  ('perolas',   'Pérolas'),
+  ('crucifixo', 'Crucifixo'),
+  ('entremeio', 'Entremeio'),
+  ('fio',       'Fio'),
+  ('embalagem', 'Embalagem'),
+  ('outros',    'Outros')
+on conflict (key) do nothing;
+
+drop trigger if exists trg_price_materials_touch on public.price_materials;
+create trigger trg_price_materials_touch
+  before update on public.price_materials
+  for each row execute function public.touch_updated_at();
+
+-- saved terço models: how many units of each material a given model uses,
+-- plus the chosen profit margin. Cost/profit/final price are always
+-- recalculated live in the browser from the current material costs above
+-- — nothing pre-computed is stored, so editing a material cost instantly
+-- updates every model's price.
+create table if not exists public.price_models (
+  id             uuid primary key default gen_random_uuid(),
+  name           text not null check (char_length(trim(name)) > 0),
+  qty_perolas    numeric(10,2) not null default 0,
+  qty_crucifixo  numeric(10,2) not null default 0,
+  qty_entremeio  numeric(10,2) not null default 0,
+  qty_fio        numeric(10,2) not null default 0,
+  qty_embalagem  numeric(10,2) not null default 0,
+  qty_outros     numeric(10,2) not null default 0,
+  margin_percent numeric(6,2) not null default 50,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
+drop trigger if exists trg_price_models_touch on public.price_models;
+create trigger trg_price_models_touch
+  before update on public.price_models
+  for each row execute function public.touch_updated_at();
+
+alter table public.price_materials enable row level security;
+alter table public.price_models enable row level security;
+
+drop policy if exists "admins manage price materials" on public.price_materials;
+create policy "admins manage price materials"
+  on public.price_materials for all
+  to authenticated
+  using (true) with check (true);
+
+drop policy if exists "admins manage price models" on public.price_models;
+create policy "admins manage price models"
+  on public.price_models for all
+  to authenticated
+  using (true) with check (true);
+
 -- ==========================================================================
 -- Done. Next: Authentication → Users → Add user, to create your first
 -- admin login (see README.md, step 4).

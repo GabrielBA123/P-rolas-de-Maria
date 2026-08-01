@@ -263,9 +263,9 @@
         <h4>1. Escolha o tipo</h4>
         <p class="custom-sub">Define o valor do seu terço</p>
         <div class="choice-row" id="tipoChoice">
-          <button type="button" class="choice-btn selected" data-tipo="normal" data-price="19.90">
+          <button type="button" class="choice-btn selected" data-tipo="normal">
             <span class="choice-title">Terço simples</span>
-            <span class="choice-price">R$ 19,90</span>
+            <span class="choice-price">a partir de R$ 19,90</span>
           </button>
           <button type="button" class="choice-btn" data-tipo="perolas" data-price="29.90">
             <span class="choice-title">Só de pérolas de Pai Nosso</span>
@@ -274,31 +274,67 @@
         </div>
       </div>
 
-      <div class="custom-card" style="margin-top:20px;" id="corCard">
-        <h4>2. Escolha a cor da Ave Maria</h4>
-        <p class="custom-sub">Contas disponíveis em 5 cores</p>
-        <div class="swatches" id="corChoice">
-          <button type="button" class="swatch selected" data-cor="Royal">
-            <span class="swatch-dot" style="background:#1E2A63;"></span><span>Royal</span>
+      <div class="custom-card" style="margin-top:20px;" id="tamanhoCard">
+        <h4>2. Escolha o tamanho da Ave Maria</h4>
+        <div class="choice-row" id="tamanhoChoice">
+          <button type="button" class="choice-btn selected" data-tamanho="6mm">
+            <span class="choice-title">6mm</span>
+            <span class="choice-price" style="font-weight:400;color:var(--ink-soft);">as clássicas</span>
           </button>
-          <button type="button" class="swatch" data-cor="Branco Fosco">
+          <button type="button" class="choice-btn" data-tamanho="8mm">
+            <span class="choice-title">8mm</span>
+            <span class="choice-price" style="font-weight:400;color:var(--ink-soft);">as premium</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="custom-card" style="margin-top:20px;" id="corCard">
+        <h4>3. Escolha a cor da Ave Maria</h4>
+        <p class="custom-sub" id="corSub">Contas de 6mm disponíveis em 3 cores</p>
+
+        <div class="swatches" id="corChoice6mm">
+          <button type="button" class="swatch selected" data-cor="Branco Fosco">
             <span class="swatch-dot" style="background:#EDE6DA;"></span><span>Branco Fosco</span>
           </button>
           <button type="button" class="swatch" data-cor="Vermelho">
             <span class="swatch-dot" style="background:#8B2331;"></span><span>Vermelho</span>
           </button>
-          <button type="button" class="swatch" data-cor="Dourado">
-            <span class="swatch-dot" style="background:#B8963E;"></span><span>Dourado</span>
-          </button>
           <button type="button" class="swatch" data-cor="Creme">
             <span class="swatch-dot" style="background:#E9DFC5;"></span><span>Creme</span>
           </button>
         </div>
+
+        <div class="swatches" id="corChoice8mm" style="display:none;">
+          <button type="button" class="swatch swatch-photo" data-cor="Preto" data-preview="assets/images/ave-maria-8mm-preto.jpg">
+            <span class="swatch-dot swatch-photo-dot" style="background-image:url('assets/images/ave-maria-8mm-preto.jpg');"></span><span>Preto</span>
+          </button>
+          <button type="button" class="swatch swatch-photo" data-cor="Azul Claro" data-preview="assets/images/ave-maria-8mm-azul-claro.jpg">
+            <span class="swatch-dot swatch-photo-dot" style="background-image:url('assets/images/ave-maria-8mm-azul-claro.jpg');"></span><span>Azul Claro</span>
+          </button>
+          <button type="button" class="swatch swatch-photo" data-cor="Rosa Claro" data-preview="assets/images/ave-maria-8mm-rosa-claro.jpg">
+            <span class="swatch-dot swatch-photo-dot" style="background-image:url('assets/images/ave-maria-8mm-rosa-claro.jpg');"></span><span>Rosa Claro</span>
+          </button>
+        </div>
+        <p class="custom-sub" id="corMouseHint" style="margin:10px 0 0;display:none;">Passe o mouse (ou toque) numa cor de 8mm para ver a foto ampliada.</p>
+
         <p class="custom-sub" id="corHint" style="margin:10px 0 0;display:none;">Nesta opção, todas as contas são de pérola no estilo Pai Nosso — não há escolha de cor.</p>
       </div>
 
+      <div class="custom-card" style="margin-top:20px;" id="nomeCard">
+        <h4>4. Nome personalizado</h4>
+        <label class="name-toggle-row">
+          <input type="checkbox" id="nomeToggle">
+          <span>Quero o nome em miçangas de letras (+R$ 3,00)</span>
+          <span class="preview-trigger" data-preview="assets/images/miscanga-letras.jpg">🔍 ver miçangas</span>
+        </label>
+        <div class="field" id="nomeFieldWrap" style="display:none;margin-top:12px;margin-bottom:0;">
+          <label for="nomeInput">Qual nome você quer nas miçangas?</label>
+          <input type="text" id="nomeInput" placeholder="Ex: Maria" maxlength="12">
+        </div>
+      </div>
+
       <div class="custom-card" style="margin-top:20px;">
-        <h4>3. Escolha o estilo do Pai Nosso</h4>
+        <h4>5. Escolha o estilo do Pai Nosso</h4>
         <div class="choice-row" id="paiNossoChoice">
           <button type="button" class="choice-btn selected" data-estilo="Florzinha">
             <span class="choice-title">Florzinha</span>
@@ -312,20 +348,30 @@
       </div>
 
       <div class="custom-card" style="margin-top:20px;">
-        <h4>4. Entremeio e crucifixo</h4>
+        <h4>6. Entremeio e crucifixo</h4>
         <div class="field" style="margin-bottom:0;">
           <label for="santoSelect">Qual santo(a) você deseja no entremeio?</label>
           <select id="santoSelect">
             <option value="" disabled selected>Selecione uma opção</option>
+            <option value="Carlo Acutis">Carlo Acutis</option>
+            <option value="Divino Espírito Santo">Divino Espírito Santo</option>
             <option value="Jesus">Jesus</option>
             <option value="Jesus Misericordioso">Jesus Misericordioso</option>
-            <option value="Nossa Senhora das Graças">Nossa Senhora das Graças</option>
-            <option value="Nossa Senhora de Guadalupe">Nossa Senhora de Guadalupe</option>
-            <option value="São Miguel Arcanjo">São Miguel Arcanjo</option>
-            <option value="Sagrado Coração de Jesus">Sagrado Coração de Jesus</option>
-            <option value="Sagrada Família">Sagrada Família</option>
-            <option value="Nossa Senhora do Rosário">Nossa Senhora do Rosário</option>
             <option value="Menino Jesus de Praga">Menino Jesus de Praga</option>
+            <option value="Nossa Senhora Aparecida">Nossa Senhora Aparecida</option>
+            <option value="Nossa Senhora das Graças">Nossa Senhora das Graças</option>
+            <option value="Nossa Senhora de Fátima">Nossa Senhora de Fátima</option>
+            <option value="Nossa Senhora de Guadalupe">Nossa Senhora de Guadalupe</option>
+            <option value="Nossa Senhora do Rosário">Nossa Senhora do Rosário</option>
+            <option value="Pai das Misericórdias">Pai das Misericórdias</option>
+            <option value="Sagrada Família">Sagrada Família</option>
+            <option value="Sagrado Coração de Jesus">Sagrado Coração de Jesus</option>
+            <option value="Sagrado Coração de Maria">Sagrado Coração de Maria</option>
+            <option value="Santa Rita">Santa Rita</option>
+            <option value="Santa Terezinha">Santa Terezinha</option>
+            <option value="São Bento">São Bento</option>
+            <option value="São José">São José</option>
+            <option value="São Miguel Arcanjo">São Miguel Arcanjo</option>
             <option value="outro">Quero um entremeio especial (falar no WhatsApp)</option>
           </select>
           <p class="custom-sub" id="santoOutroHint" style="margin:10px 0 0;display:none;">
@@ -469,6 +515,11 @@
 </div>
 
 <!-- Lightbox: enlarges the 3 photos of an example terço when its card is clicked -->
+<!-- Floating preview: shows an enlarged photo when hovering/tapping a bead option -->
+<div class="hover-preview" id="hoverPreview">
+  <img id="hoverPreviewImg" src="" alt="">
+</div>
+
 <div class="lightbox-overlay" id="lightboxOverlay">
   <div class="lightbox">
     <button class="lightbox-close" id="lightboxClose">✕</button>

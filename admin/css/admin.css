@@ -89,6 +89,72 @@ main{max-width:1280px;margin:0 auto;padding:28px;}
 }
 .toast.show{opacity:1;transform:translateY(0);}
 
+/* ---------- Admin tabs ---------- */
+.admin-tabs{display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--line);}
+.admin-tab{
+  background:none;border:none;padding:12px 4px;margin-right:22px;font-size:.9rem;
+  color:var(--ink-soft);border-bottom:2px solid transparent;font-family:'Jost',sans-serif;
+}
+.admin-tab.active{color:var(--sapphire-deep);border-bottom-color:var(--sapphire);font-weight:600;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ---------- Calculadora de Preço ---------- */
+.calc-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;align-items:start;}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:20px;}
+.card h4{font-size:1.15rem;margin-bottom:6px;}
+.card p.sub{font-family:'Jost',sans-serif;font-size:.78rem;color:var(--ink-soft);margin:0 0 14px;}
+
+.materials-list{display:flex;flex-direction:column;gap:10px;}
+.material-row{
+  display:grid;grid-template-columns:1fr 130px;gap:10px;align-items:center;
+  padding:8px 0;border-bottom:1px dashed var(--line);
+}
+.material-row:last-child{border-bottom:none;}
+.material-row label{font-family:'Jost',sans-serif;font-size:.86rem;color:var(--ink);}
+.material-row .cost-input{display:flex;align-items:center;gap:6px;}
+.material-row .cost-input span{font-family:'Jost',sans-serif;font-size:.78rem;color:var(--ink-soft);}
+.material-row input{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+  font-family:'Lora',serif;font-size:.88rem;background:var(--cream);color:var(--ink);
+}
+
+.materials-qty-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.materials-qty-grid .field label{font-size:.76rem;}
+
+.calc-result{
+  background:var(--cream);border:1px dashed var(--gold);border-radius:12px;
+  padding:14px 16px;margin-top:18px;
+}
+.calc-result .row{display:flex;justify-content:space-between;font-size:.85rem;color:var(--ink-soft);margin-bottom:6px;font-family:'Jost',sans-serif;}
+.calc-result .row strong{color:var(--sapphire-deep);}
+.calc-result .total{
+  border-top:1px solid var(--line);margin-top:8px;padding-top:8px;
+  display:flex;justify-content:space-between;font-family:'Cormorant Garamond',serif;
+  font-size:1.4rem;color:var(--sapphire-deep);
+}
+.calc-actions{display:flex;gap:10px;margin-top:16px;}
+.calc-actions .btn-ghost, .calc-actions .btn-primary{flex:1;margin-top:0;}
+
+.model-card{
+  background:var(--cream);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;margin-bottom:12px;
+}
+.model-card .model-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.model-card h5{font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:var(--sapphire-deep);margin:0;}
+.model-card .model-price{font-family:'Jost',sans-serif;font-size:.78rem;color:var(--gold);font-weight:600;margin-top:2px;}
+.model-card .model-actions{display:flex;gap:6px;flex-shrink:0;}
+.model-card .model-actions button{
+  background:none;border:1px solid var(--line);border-radius:999px;padding:5px 12px;
+  font-size:.72rem;color:var(--ink-soft);
+}
+.model-card .model-actions button.danger{border-color:var(--red);color:var(--red);}
+
+@media (max-width:760px){
+  .calc-grid{grid-template-columns:1fr;}
+  .materials-qty-grid{grid-template-columns:1fr;}
+}
+
 /* ---------- Dashboard cards ---------- */
 .stats-grid{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;

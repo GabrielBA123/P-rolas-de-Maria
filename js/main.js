@@ -86,41 +86,87 @@ function removeFromCart(id){
 }
 
 // ---------- personalized terço configurator ----------
+var PRICE_TABLE = {
+  '6mm': { base: 19.90, comNome: 22.90 },
+  '8mm': { base: 24.90, comNome: 26.90 }
+};
+var PRICE_PEROLAS = 29.90;
+
 var customState = {
-  tipo: 'normal',
-  price: 19.90,
-  tipoLabel: 'Terço simples',
-  cor: 'Royal',
+  tipo: 'normal',      // 'normal' | 'perolas'
+  tamanho: '6mm',       // '6mm' | '8mm' — only matters when tipo === 'normal'
+  cor: 'Branco Fosco',
   estilo: 'Florzinha',
   santo: '',
+  nomePersonalizado: false,
+  nomeTexto: '',
+  price: PRICE_TABLE['6mm'].base,
   qty: 1
 };
+
+function recalcPrice(){
+  if(customState.tipo === 'perolas'){
+    customState.price = PRICE_PEROLAS;
+    return;
+  }
+  var tier = PRICE_TABLE[customState.tamanho];
+  customState.price = customState.nomePersonalizado ? tier.comNome : tier.base;
+}
+
+function updateTipoVisibility(){
+  var isPerolas = customState.tipo === 'perolas';
+  document.getElementById('tamanhoCard').style.display = isPerolas ? 'none' : 'block';
+  document.getElementById('nomeCard').style.display = isPerolas ? 'none' : 'block';
+  document.getElementById('corSub').style.display = isPerolas ? 'none' : 'block';
+  document.getElementById('corHint').style.display = isPerolas ? 'block' : 'none';
+  updateCorGroupVisibility();
+}
+
+function updateCorGroupVisibility(){
+  var isPerolas = customState.tipo === 'perolas';
+  var show6mm = !isPerolas && customState.tamanho === '6mm';
+  var show8mm = !isPerolas && customState.tamanho === '8mm';
+  document.getElementById('corChoice6mm').style.display = show6mm ? 'flex' : 'none';
+  document.getElementById('corChoice8mm').style.display = show8mm ? 'flex' : 'none';
+  document.getElementById('corMouseHint').style.display = show8mm ? 'block' : 'none';
+}
 
 document.querySelectorAll('#tipoChoice .choice-btn').forEach(function(btn){
   btn.addEventListener('click', function(){
     document.querySelectorAll('#tipoChoice .choice-btn').forEach(function(b){b.classList.remove('selected');});
     btn.classList.add('selected');
     customState.tipo = btn.dataset.tipo;
-    customState.price = parseFloat(btn.dataset.price);
-    customState.tipoLabel = btn.querySelector('.choice-title').textContent;
-    var corHint = document.getElementById('corHint');
-    var corChoice = document.getElementById('corChoice');
-    if(customState.tipo === 'perolas'){
-      corChoice.style.opacity = '.35';
-      corChoice.style.pointerEvents = 'none';
-      corHint.style.display = 'block';
-    } else {
-      corChoice.style.opacity = '1';
-      corChoice.style.pointerEvents = 'auto';
-      corHint.style.display = 'none';
-    }
+    updateTipoVisibility();
+    recalcPrice();
     updateCustomSummary();
   });
 });
 
-document.querySelectorAll('#corChoice .swatch').forEach(function(btn){
+document.querySelectorAll('#tamanhoChoice .choice-btn').forEach(function(btn){
   btn.addEventListener('click', function(){
-    document.querySelectorAll('#corChoice .swatch').forEach(function(b){b.classList.remove('selected');});
+    document.querySelectorAll('#tamanhoChoice .choice-btn').forEach(function(b){b.classList.remove('selected');});
+    btn.classList.add('selected');
+    customState.tamanho = btn.dataset.tamanho;
+    // reset to that size's first color so we never keep a color that
+    // doesn't exist in the newly chosen size
+    if(customState.tamanho === '6mm'){
+      customState.cor = 'Branco Fosco';
+      document.querySelectorAll('#corChoice6mm .swatch').forEach(function(s,i){ s.classList.toggle('selected', i===0); });
+    } else {
+      customState.cor = 'Preto';
+      document.querySelectorAll('#corChoice8mm .swatch').forEach(function(s,i){ s.classList.toggle('selected', i===0); });
+    }
+    document.getElementById('corSub').textContent = 'Contas de ' + customState.tamanho + ' disponíveis em 3 cores';
+    updateCorGroupVisibility();
+    recalcPrice();
+    updateCustomSummary();
+  });
+});
+
+document.querySelectorAll('#corChoice6mm .swatch, #corChoice8mm .swatch').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var group = btn.closest('.swatches');
+    group.querySelectorAll('.swatch').forEach(function(b){b.classList.remove('selected');});
     btn.classList.add('selected');
     customState.cor = btn.dataset.cor;
     updateCustomSummary();
@@ -134,6 +180,58 @@ document.querySelectorAll('#paiNossoChoice .choice-btn').forEach(function(btn){
     customState.estilo = btn.dataset.estilo;
     updateCustomSummary();
   });
+});
+
+// ---------- nome personalizado (miçangas de letras) ----------
+var nomeToggle = document.getElementById('nomeToggle');
+var nomeFieldWrap = document.getElementById('nomeFieldWrap');
+var nomeInput = document.getElementById('nomeInput');
+if(nomeToggle){
+  nomeToggle.addEventListener('change', function(){
+    customState.nomePersonalizado = nomeToggle.checked;
+    nomeFieldWrap.style.display = nomeToggle.checked ? 'block' : 'none';
+    recalcPrice();
+    updateCustomSummary();
+  });
+}
+if(nomeInput){
+  nomeInput.addEventListener('input', function(){
+    customState.nomeTexto = nomeInput.value.trim();
+    updateCustomSummary();
+  });
+}
+
+// ---------- hover / tap preview (8mm colors + name-bead photo) ----------
+var hoverPreview = document.getElementById('hoverPreview');
+var hoverPreviewImg = document.getElementById('hoverPreviewImg');
+
+function showPreview(el){
+  var src = el.dataset.preview;
+  if(!src) return;
+  hoverPreviewImg.src = src;
+  var rect = el.getBoundingClientRect();
+  var left = Math.min(rect.left, window.innerWidth - 196);
+  var top = rect.bottom + 10;
+  if(top + 190 > window.innerHeight){ top = rect.top - 200; }
+  hoverPreview.style.left = Math.max(8, left) + 'px';
+  hoverPreview.style.top = Math.max(8, top) + 'px';
+  hoverPreview.classList.add('show');
+}
+function hidePreview(){
+  hoverPreview.classList.remove('show');
+}
+
+document.querySelectorAll('[data-preview]').forEach(function(el){
+  el.addEventListener('mouseenter', function(){ showPreview(el); });
+  el.addEventListener('mouseleave', hidePreview);
+  el.addEventListener('click', function(e){
+    // on touch devices there's no real hover — a tap opens/closes the preview
+    if(hoverPreview.classList.contains('show')){ hidePreview(); }
+    else { showPreview(el); e.stopPropagation(); }
+  });
+});
+document.addEventListener('click', function(e){
+  if(!e.target.closest('[data-preview]')) hidePreview();
 });
 
 var santoSelect = document.getElementById('santoSelect');
@@ -160,24 +258,52 @@ function changeCustomQty(delta){
 
 function updateCustomSummary(){
   var santoText = customState.santo ? customState.santo : 'a combinar';
-  var corLine = customState.tipo === 'perolas'
-    ? '<div class="cfg-row"><strong>Contas:</strong><span>só pérolas (Pai Nosso)</span></div>'
-    : '<div class="cfg-row"><strong>Cor da Ave Maria:</strong><span>' + customState.cor + '</span></div>';
-  var html =
-    '<div class="cfg-row"><strong>Tipo:</strong><span>' + customState.tipoLabel + '</span></div>' +
-    corLine +
-    '<div class="cfg-row"><strong>Pai Nosso:</strong><span>' + customState.estilo + '</span></div>' +
-    '<div class="cfg-row"><strong>Entremeio:</strong><span>' + santoText + '</span></div>' +
-    '<div class="cfg-row"><strong>Quantidade:</strong><span>' + customState.qty + '</span></div>' +
-    '<div class="total"><span>Total</span><span>' + formatBRL(customState.price * customState.qty) + '</span></div>';
-  document.getElementById('customSummary').innerHTML = html;
+  var isPerolas = customState.tipo === 'perolas';
+
+  var rows = '<div class="cfg-row"><strong>Tipo:</strong><span>' +
+    (isPerolas ? 'Só de pérolas de Pai Nosso' : 'Terço simples') + '</span></div>';
+
+  if(isPerolas){
+    rows += '<div class="cfg-row"><strong>Contas:</strong><span>só pérolas (Pai Nosso)</span></div>';
+  } else {
+    rows += '<div class="cfg-row"><strong>Tamanho:</strong><span>' + customState.tamanho + '</span></div>';
+    rows += '<div class="cfg-row"><strong>Cor da Ave Maria:</strong><span>' + customState.cor + '</span></div>';
+    rows += '<div class="cfg-row"><strong>Nome personalizado:</strong><span>' +
+      (customState.nomePersonalizado ? (customState.nomeTexto || 'sim (nome a combinar)') : 'não') + '</span></div>';
+  }
+
+  rows += '<div class="cfg-row"><strong>Pai Nosso:</strong><span>' + customState.estilo + '</span></div>';
+  rows += '<div class="cfg-row"><strong>Entremeio:</strong><span>' + santoText + '</span></div>';
+  rows += '<div class="cfg-row"><strong>Quantidade:</strong><span>' + customState.qty + '</span></div>';
+  rows += '<div class="total"><span>Total</span><span>' + formatBRL(customState.price * customState.qty) + '</span></div>';
+
+  document.getElementById('customSummary').innerHTML = rows;
 }
 
 function addCustomToCart(){
+  if(customState.nomePersonalizado && !customState.nomeTexto){
+    showToast('Digite o nome para as miçangas antes de adicionar');
+    nomeInput.focus();
+    return;
+  }
+
   var santoText = customState.santo ? customState.santo : 'a combinar';
-  var corText = customState.tipo === 'perolas' ? 'só pérolas (Pai Nosso)' : customState.cor;
-  var name = customState.tipoLabel + ' — ' + corText + ', Pai Nosso ' + customState.estilo + ', entremeio: ' + santoText;
-  var id = 'custom-' + customState.tipo + '-' + customState.cor + '-' + customState.estilo + '-' + santoText + '-' + Date.now();
+  var isPerolas = customState.tipo === 'perolas';
+  var tipoLabel = isPerolas ? 'Só de pérolas de Pai Nosso' : 'Terço simples';
+
+  var nameParts = [tipoLabel];
+  if(isPerolas){
+    nameParts.push('só pérolas (Pai Nosso)');
+  } else {
+    nameParts.push(customState.tamanho, customState.cor);
+    if(customState.nomePersonalizado){ nameParts.push('nome "' + customState.nomeTexto + '"'); }
+  }
+  nameParts.push('Pai Nosso ' + customState.estilo, 'entremeio: ' + santoText);
+  var name = nameParts.join(' — ');
+
+  var id = 'custom-' + customState.tipo + '-' + customState.tamanho + '-' + customState.cor + '-' +
+    customState.estilo + '-' + (customState.nomePersonalizado ? customState.nomeTexto : 'semnome') + '-' + santoText + '-' + Date.now();
+
   cart.push({
     id: id,
     name: name,
@@ -187,10 +313,12 @@ function addCustomToCart(){
     // extra detail kept for the order sent to Supabase (see checkout.js)
     customDetails: {
       tipo: customState.tipo,
-      tipoLabel: customState.tipoLabel,
-      cor: customState.tipo === 'perolas' ? null : customState.cor,
+      tipoLabel: tipoLabel,
+      tamanho: isPerolas ? null : customState.tamanho,
+      cor: isPerolas ? null : customState.cor,
       estilo: customState.estilo,
-      entremeio: customState.santo || null
+      entremeio: customState.santo || null,
+      nomePersonalizado: (!isPerolas && customState.nomePersonalizado) ? customState.nomeTexto : null
     }
   });
   renderCart();
@@ -204,6 +332,7 @@ function addCustomToCart(){
   updateCustomSummary();
 }
 
+updateTipoVisibility();
 updateCustomSummary();
 
 function changeCartQty(id, delta){

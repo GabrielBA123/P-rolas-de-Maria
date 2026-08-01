@@ -43,6 +43,12 @@
   </header>
 
   <main>
+    <div class="admin-tabs" id="adminTabs">
+      <button class="admin-tab active" data-tab="pedidos">Pedidos</button>
+      <button class="admin-tab" data-tab="calculadora">Calculadora de Preço</button>
+    </div>
+
+    <div class="tab-panel active" id="tabPedidos">
     <div class="stats-grid" id="statsGrid"><!-- filled by admin.js --></div>
 
     <div class="toolbar">
@@ -78,6 +84,56 @@
       </table>
       <div class="empty-state" id="emptyState" style="display:none;">Nenhum pedido encontrado.</div>
     </div>
+    </div>
+
+    <div class="tab-panel" id="tabCalculadora">
+      <div class="calc-grid">
+        <div>
+          <div class="card">
+            <h4>Custo dos materiais</h4>
+            <p class="sub">Preço que você paga por unidade de cada material. Editando aqui, o preço de todos os modelos salvos atualiza sozinho.</p>
+            <div class="materials-list" id="materialsList"><!-- filled by calculadora.js --></div>
+            <button class="btn-primary" id="saveMaterialsBtn" style="margin-top:14px;">Salvar custos dos materiais</button>
+          </div>
+
+          <div class="card">
+            <h4 id="modelFormTitle">Novo modelo de terço</h4>
+            <div class="field" style="margin-bottom:14px;">
+              <label for="modelName">Nome do modelo</label>
+              <input type="text" id="modelName" placeholder="Ex: Terço 6mm sem nome">
+            </div>
+
+            <p class="sub" style="margin-bottom:8px;">Quantas unidades de cada material esse modelo usa:</p>
+            <div class="materials-qty-grid" id="modelQtyInputs"><!-- filled by calculadora.js --></div>
+
+            <p class="sub" style="margin:16px 0 8px;">Margem de lucro</p>
+            <div class="choice-row" id="marginChoice">
+              <button type="button" class="choice-btn" data-margin="30"><span class="choice-title">30%</span></button>
+              <button type="button" class="choice-btn selected" data-margin="50"><span class="choice-title">50%</span></button>
+              <button type="button" class="choice-btn" data-margin="100"><span class="choice-title">100%</span></button>
+            </div>
+            <div class="field" style="margin-top:10px;">
+              <label for="marginCustom">Ou outra margem (%)</label>
+              <input type="number" id="marginCustom" min="0" step="1" placeholder="Ex: 65">
+            </div>
+
+            <div class="calc-result" id="calcResult"><!-- filled by calculadora.js --></div>
+
+            <div class="calc-actions">
+              <button class="btn-ghost" id="clearModelBtn" type="button">Limpar campos</button>
+              <button class="btn-primary" id="saveModelBtn" type="button">Salvar modelo</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <h4>Modelos salvos</h4>
+            <div id="modelsList"><!-- filled by calculadora.js --></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -99,5 +155,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/supabase-client.js"></script>
 <script src="/admin/js/admin.js"></script>
+<script src="/admin/js/calculadora.js"></script>
 </body>
 </html>
