@@ -42,7 +42,7 @@ a{color:inherit;}
 .login-card p.sub{text-align:center;color:var(--ink-soft);font-size:.88rem;margin:0 0 26px;}
 .field{margin-bottom:16px;}
 .field label{font-family:'Jost',sans-serif;font-size:.78rem;color:var(--ink-soft);}
-.field input{
+.field input, .field select{
   width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;
   font-family:'Lora',serif;font-size:.92rem;margin-top:6px;background:#fff;color:var(--ink);
 }
@@ -105,15 +105,20 @@ main{max-width:1280px;margin:0 auto;padding:28px;}
 .card h4{font-size:1.15rem;margin-bottom:6px;}
 .card p.sub{font-family:'Jost',sans-serif;font-size:.78rem;color:var(--ink-soft);margin:0 0 14px;}
 
-.materials-list{display:flex;flex-direction:column;gap:10px;}
+.materials-list{display:flex;flex-direction:column;gap:14px;}
 .material-row{
-  display:grid;grid-template-columns:1fr 130px;gap:10px;align-items:center;
-  padding:8px 0;border-bottom:1px dashed var(--line);
+  padding:10px 0;border-bottom:1px dashed var(--line);
 }
 .material-row:last-child{border-bottom:none;}
-.material-row label{font-family:'Jost',sans-serif;font-size:.86rem;color:var(--ink);}
-.material-row .cost-input{display:flex;align-items:center;gap:6px;}
-.material-row .cost-input span{font-family:'Jost',sans-serif;font-size:.78rem;color:var(--ink-soft);}
+.material-row-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.material-row-head label{font-family:'Jost',sans-serif;font-size:.9rem;font-weight:600;color:var(--ink);}
+.stock-badge{
+  font-family:'Jost',sans-serif;font-size:.7rem;padding:3px 10px;border-radius:999px;
+  background:#DCEFE0;color:#1F6B3D;
+}
+.stock-badge.low{background:#F6DEDE;color:#8A2E2E;}
+.material-row-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.mini-field span{display:block;font-family:'Jost',sans-serif;font-size:.68rem;color:var(--ink-soft);margin-bottom:3px;}
 .material-row input{
   width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
   font-family:'Lora',serif;font-size:.88rem;background:var(--cream);color:var(--ink);
@@ -121,6 +126,17 @@ main{max-width:1280px;margin:0 auto;padding:28px;}
 
 .materials-qty-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .materials-qty-grid .field label{font-size:.76rem;}
+
+.low-stock-banner{
+  background:#F6DEDE;border:1px solid #E3B8B8;color:#8A2E2E;border-radius:12px;
+  padding:12px 16px;margin-bottom:20px;font-family:'Jost',sans-serif;font-size:.84rem;
+}
+.low-stock-banner strong{display:block;margin-bottom:4px;font-family:'Cormorant Garamond',serif;font-size:1.1rem;}
+
+.recent-list{margin-top:16px;border-top:1px solid var(--line);padding-top:12px;}
+.recent-list .recent-title{font-family:'Jost',sans-serif;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:8px;}
+.recent-item{display:flex;justify-content:space-between;font-size:.8rem;color:var(--ink-soft);padding:5px 0;font-family:'Jost',sans-serif;}
+.recent-item strong{color:var(--sapphire-deep);font-weight:600;}
 
 .calc-result{
   background:var(--cream);border:1px dashed var(--gold);border-radius:12px;

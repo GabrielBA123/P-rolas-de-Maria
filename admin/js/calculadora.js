@@ -41,6 +41,8 @@ async function initCalculadora(){
   renderModelQtyInputs();
   wireMarginChoice();
   wireLiveCalc();
+  wirePurchaseForm();
+  wireSaleForm();
   await loadMaterials();
   await loadModels();
 }
@@ -52,40 +54,68 @@ async function loadMaterials(){
   renderMaterialsList(materials);
   updateCalcResult();
   renderModelsList();
+  renderPurchaseMaterialOptions();
+  updateLowStockBanner();
+  await loadRecentPurchases();
 }
 
 function renderMaterialsList(list){
   const el = document.getElementById('materialsList');
   if(list.length === 0){
-    el.innerHTML = MATERIAL_KEYS.map(k =>
-      `<div class="material-row"><label>Carregando...</label><div></div></div>`
-    ).join('');
+    el.innerHTML = '<p class="sub">Carregando...</p>';
     return;
   }
-  el.innerHTML = list.map(m => `
+  el.innerHTML = list.map(m => {
+    const low = Number(m.stock_quantity) <= Number(m.low_stock_threshold);
+    return `
     <div class="material-row">
-      <label for="mat-${m.key}">${m.label}</label>
-      <div class="cost-input">
-        <span>R$</span>
-        <input type="number" id="mat-${m.key}" min="0" step="0.0001" value="${m.unit_cost}">
+      <div class="material-row-head">
+        <label>${m.label}</label>
+        <span class="stock-badge ${low ? 'low' : ''}">${low ? '⚠ ' : ''}estoque: ${m.stock_quantity}</span>
+      </div>
+      <div class="material-row-fields">
+        <div class="mini-field">
+          <span>Custo (R$)</span>
+          <input type="number" id="mat-${m.key}" min="0" step="0.0001" value="${m.unit_cost}">
+        </div>
+        <div class="mini-field">
+          <span>Estoque atual</span>
+          <input type="number" id="stock-${m.key}" min="0" step="0.01" value="${m.stock_quantity}">
+        </div>
+        <div class="mini-field">
+          <span>Estoque mínimo</span>
+          <input type="number" id="min-${m.key}" min="0" step="0.01" value="${m.low_stock_threshold}">
+        </div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
   // any edit to a material cost updates the live preview immediately
   list.forEach(m => {
     document.getElementById('mat-' + m.key).addEventListener('input', updateCalcResult);
   });
 }
 
+function updateLowStockBanner(){
+  const low = materials.filter(m => Number(m.stock_quantity) <= Number(m.low_stock_threshold));
+  const banner = document.getElementById('lowStockBanner');
+  if(low.length === 0){ banner.style.display = 'none'; return; }
+  banner.style.display = 'block';
+  banner.innerHTML = '<strong>⚠ Estoque baixo</strong>' +
+    low.map(m => m.label + ' (' + m.stock_quantity + ' restantes)').join(' · ');
+}
+
 document.getElementById('saveMaterialsBtn').addEventListener('click', async () => {
   const updates = materials.map(m => {
-    const val = parseFloat(document.getElementById('mat-' + m.key).value) || 0;
-    return sb.from('price_materials').update({ unit_cost: val }).eq('id', m.id);
+    const cost = parseFloat(document.getElementById('mat-' + m.key).value) || 0;
+    const stock = parseFloat(document.getElementById('stock-' + m.key).value) || 0;
+    const min = parseFloat(document.getElementById('min-' + m.key).value) || 0;
+    return sb.from('price_materials').update({ unit_cost: cost, stock_quantity: stock, low_stock_threshold: min }).eq('id', m.id);
   });
   const results = await Promise.all(updates);
   const failed = results.find(r => r.error);
-  if(failed){ showToast('Erro ao salvar custos.'); console.error(failed.error); return; }
-  showToast('Custos dos materiais salvos.');
+  if(failed){ showToast('Erro ao salvar.'); console.error(failed.error); return; }
+  showToast('Custos e estoque salvos.');
   await loadMaterials();
 });
 
@@ -119,7 +149,6 @@ function wireMarginChoice(){
 }
 
 function wireLiveCalc(){
-  document.getElementById('modelName').addEventListener('input', () => {}); // name doesn't affect price, no-op
   document.getElementById('marginCustom').addEventListener('input', (e) => {
     if(e.target.value !== ''){
       document.querySelectorAll('#marginChoice .choice-btn').forEach(b => b.classList.remove('selected'));
@@ -205,6 +234,8 @@ async function loadModels(){
   if(error){ showToast('Erro ao carregar modelos.'); console.error(error); return; }
   savedModels = data;
   renderModelsList();
+  renderSaleModelOptions();
+  await loadRecentSales();
 }
 
 function renderModelsList(){
@@ -269,4 +300,142 @@ function escapeHtmlCalc(s){
   const d = document.createElement('div');
   d.textContent = s == null ? '' : String(s);
   return d.innerHTML;
+}
+
+/* ==========================================================================
+   Registrar compra de material
+   ========================================================================== */
+function renderPurchaseMaterialOptions(){
+  const el = document.getElementById('purchaseMaterial');
+  const current = el.value;
+  el.innerHTML = materials.map(m => `<option value="${m.id}">${m.label}</option>`).join('');
+  if(current) el.value = current;
+}
+
+function wirePurchaseForm(){
+  document.getElementById('registerPurchaseBtn').addEventListener('click', async () => {
+    const materialId = document.getElementById('purchaseMaterial').value;
+    const quantity = parseFloat(document.getElementById('purchaseQty').value);
+    const totalCost = parseFloat(document.getElementById('purchaseCost').value);
+    const notes = document.getElementById('purchaseNotes').value.trim();
+
+    if(!materialId || !quantity || quantity <= 0){
+      showToast('Escolha o material e uma quantidade válida.');
+      return;
+    }
+    if(isNaN(totalCost) || totalCost < 0){
+      showToast('Informe o valor total pago.');
+      return;
+    }
+
+    const { error } = await sb.rpc('register_purchase', {
+      p_material_id: materialId,
+      p_quantity: quantity,
+      p_total_cost: totalCost,
+      p_notes: notes
+    });
+    if(error){ showToast('Erro ao registrar compra.'); console.error(error); return; }
+
+    showToast('Compra registrada — estoque atualizado.');
+    document.getElementById('purchaseQty').value = '';
+    document.getElementById('purchaseCost').value = '';
+    document.getElementById('purchaseNotes').value = '';
+    await loadMaterials();
+  });
+}
+
+async function loadRecentPurchases(){
+  const { data, error } = await sb
+    .from('stock_purchases')
+    .select('*, price_materials(label)')
+    .order('purchased_at', { ascending: false })
+    .limit(5);
+  const el = document.getElementById('recentPurchases');
+  if(error){ el.innerHTML = ''; console.error(error); return; }
+  if(data.length === 0){ el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="recent-title">Últimas compras</div>' + data.map(p => `
+    <div class="recent-item">
+      <span><strong>${p.price_materials ? escapeHtmlCalc(p.price_materials.label) : ''}</strong> — ${p.quantity} un.</span>
+      <span>${calcFormatBRL(p.total_cost)}</span>
+    </div>
+  `).join('');
+}
+
+/* ==========================================================================
+   Registrar venda de terço
+   ========================================================================== */
+function renderSaleModelOptions(){
+  const el = document.getElementById('saleModel');
+  const current = el.value;
+  if(savedModels.length === 0){
+    el.innerHTML = '<option value="">Nenhum modelo salvo ainda</option>';
+    return;
+  }
+  el.innerHTML = savedModels.map(m => `<option value="${m.id}">${escapeHtmlCalc(m.name)}</option>`).join('');
+  if(current) el.value = current;
+  updateSalePricePlaceholder();
+}
+
+function updateSalePricePlaceholder(){
+  const model = savedModels.find(m => m.id === document.getElementById('saleModel').value);
+  const priceInput = document.getElementById('salePrice');
+  if(!model){ return; }
+  const qty = {};
+  MATERIAL_KEYS.forEach(k => { qty[k] = model['qty_' + k]; });
+  const { preco } = calcModelPrice(qty, model.margin_percent);
+  priceInput.value = preco.toFixed(2);
+}
+
+function wireSaleForm(){
+  document.getElementById('saleModel').addEventListener('change', updateSalePricePlaceholder);
+
+  document.getElementById('registerSaleBtn').addEventListener('click', async () => {
+    const modelId = document.getElementById('saleModel').value;
+    const quantity = parseInt(document.getElementById('saleQty').value, 10);
+    const unitPrice = parseFloat(document.getElementById('salePrice').value);
+    const notes = document.getElementById('saleNotes').value.trim();
+
+    if(!modelId){ showToast('Escolha o modelo vendido.'); return; }
+    if(!quantity || quantity <= 0){ showToast('Informe a quantidade vendida.'); return; }
+    if(isNaN(unitPrice) || unitPrice < 0){ showToast('Informe o preço de venda.'); return; }
+
+    const { data, error } = await sb.rpc('register_sale', {
+      p_model_id: modelId,
+      p_quantity: quantity,
+      p_unit_price: unitPrice,
+      p_notes: notes
+    }).single();
+
+    if(error){ showToast('Erro ao registrar venda.'); console.error(error); return; }
+
+    const resultEl = document.getElementById('saleResult');
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = `
+      <div class="row"><strong>Custo (por unidade):</strong><span>${calcFormatBRL(data.unit_cost)}</span></div>
+      <div class="row"><strong>Quantidade:</strong><span>${data.quantity}</span></div>
+      <div class="total"><span>Lucro da venda</span><span>${calcFormatBRL(data.profit)}</span></div>
+    `;
+
+    showToast('Venda registrada — estoque atualizado.');
+    document.getElementById('saleNotes').value = '';
+    await loadMaterials(); // stock changed
+    await loadRecentSales();
+  });
+}
+
+async function loadRecentSales(){
+  const { data, error } = await sb
+    .from('stock_sales')
+    .select('*, price_models(name)')
+    .order('sold_at', { ascending: false })
+    .limit(5);
+  const el = document.getElementById('recentSales');
+  if(error){ el.innerHTML = ''; console.error(error); return; }
+  if(data.length === 0){ el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="recent-title">Últimas vendas</div>' + data.map(s => `
+    <div class="recent-item">
+      <span><strong>${s.price_models ? escapeHtmlCalc(s.price_models.name) : ''}</strong> — ${s.quantity}x</span>
+      <span>lucro ${calcFormatBRL(s.profit)}</span>
+    </div>
+  `).join('');
 }

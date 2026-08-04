@@ -319,6 +319,141 @@ create policy "admins manage price models"
   to authenticated
   using (true) with check (true);
 
+-- --------------------------------------------------------------------------
+-- 9) ESTOQUE — integrated with the price calculator above.
+--    price_materials gets stock tracking columns; purchases add to stock,
+--    sales subtract from stock (using the quantities already registered
+--    per terço model in price_models). Both go through RPC functions so
+--    the stock update is atomic — no lost updates from two people (or two
+--    tabs) editing stock at the same time.
+-- --------------------------------------------------------------------------
+
+alter table public.price_materials
+  add column if not exists stock_quantity numeric(10,2) not null default 0,
+  add column if not exists low_stock_threshold numeric(10,2) not null default 10;
+
+create table if not exists public.stock_purchases (
+  id            uuid primary key default gen_random_uuid(),
+  material_id   uuid not null references public.price_materials(id) on delete cascade,
+  quantity      numeric(10,2) not null check (quantity > 0),
+  total_cost    numeric(10,2) not null check (total_cost >= 0),
+  notes         text,
+  purchased_at  timestamptz not null default now()
+);
+create index if not exists stock_purchases_material_id_idx on public.stock_purchases (material_id);
+
+create table if not exists public.stock_sales (
+  id          uuid primary key default gen_random_uuid(),
+  model_id    uuid not null references public.price_models(id) on delete cascade,
+  quantity    integer not null check (quantity > 0),
+  unit_price  numeric(10,2) not null check (unit_price >= 0),
+  unit_cost   numeric(10,2) not null check (unit_cost >= 0),  -- snapshot of cost at sale time
+  profit      numeric(10,2) not null,                          -- snapshot too — material costs may change later
+  notes       text,
+  sold_at     timestamptz not null default now()
+);
+create index if not exists stock_sales_model_id_idx on public.stock_sales (model_id);
+
+alter table public.stock_purchases enable row level security;
+alter table public.stock_sales enable row level security;
+
+drop policy if exists "admins manage stock purchases" on public.stock_purchases;
+create policy "admins manage stock purchases"
+  on public.stock_purchases for all
+  to authenticated
+  using (true) with check (true);
+
+drop policy if exists "admins manage stock sales" on public.stock_sales;
+create policy "admins manage stock sales"
+  on public.stock_sales for all
+  to authenticated
+  using (true) with check (true);
+
+-- register_purchase(): logs the purchase and atomically adds to stock.
+-- Also updates the material's unit_cost to this purchase's price-per-unit,
+-- so the calculator always reflects what you most recently paid.
+create or replace function public.register_purchase(
+  p_material_id uuid,
+  p_quantity    numeric,
+  p_total_cost  numeric,
+  p_notes       text
+)
+returns public.stock_purchases
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row public.stock_purchases;
+begin
+  insert into public.stock_purchases (material_id, quantity, total_cost, notes)
+  values (p_material_id, p_quantity, p_total_cost, nullif(p_notes, ''))
+  returning * into v_row;
+
+  update public.price_materials
+    set stock_quantity = stock_quantity + p_quantity,
+        unit_cost = case when p_quantity > 0 then p_total_cost / p_quantity else unit_cost end
+    where id = p_material_id;
+
+  return v_row;
+end;
+$$;
+grant execute on function public.register_purchase(uuid, numeric, numeric, text) to authenticated;
+
+-- register_sale(): snapshots cost/profit for the given model + quantity,
+-- logs the sale, and atomically subtracts the materials it used from stock.
+create or replace function public.register_sale(
+  p_model_id   uuid,
+  p_quantity   integer,
+  p_unit_price numeric,
+  p_notes      text
+)
+returns public.stock_sales
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_model     public.price_models;
+  v_unit_cost numeric(10,2) := 0;
+  v_row       public.stock_sales;
+begin
+  select * into v_model from public.price_models where id = p_model_id;
+  if not found then
+    raise exception 'Modelo de terço não encontrado.';
+  end if;
+
+  select coalesce(sum(pm.unit_cost * qty.amount), 0) into v_unit_cost
+  from (values
+    ('perolas',   v_model.qty_perolas),
+    ('crucifixo', v_model.qty_crucifixo),
+    ('entremeio', v_model.qty_entremeio),
+    ('fio',       v_model.qty_fio),
+    ('embalagem', v_model.qty_embalagem),
+    ('outros',    v_model.qty_outros)
+  ) as qty(key, amount)
+  join public.price_materials pm on pm.key = qty.key;
+
+  insert into public.stock_sales (model_id, quantity, unit_price, unit_cost, profit, notes)
+  values (
+    p_model_id, p_quantity, p_unit_price, v_unit_cost,
+    (p_unit_price - v_unit_cost) * p_quantity,
+    nullif(p_notes, '')
+  )
+  returning * into v_row;
+
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_perolas * p_quantity) where key = 'perolas';
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_crucifixo * p_quantity) where key = 'crucifixo';
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_entremeio * p_quantity) where key = 'entremeio';
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_fio * p_quantity) where key = 'fio';
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_embalagem * p_quantity) where key = 'embalagem';
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_outros * p_quantity) where key = 'outros';
+
+  return v_row;
+end;
+$$;
+grant execute on function public.register_sale(uuid, integer, numeric, text) to authenticated;
+
 -- ==========================================================================
 -- Done. Next: Authentication → Users → Add user, to create your first
 -- admin login (see README.md, step 4).

@@ -87,13 +87,39 @@
     </div>
 
     <div class="tab-panel" id="tabCalculadora">
+      <div class="low-stock-banner" id="lowStockBanner" style="display:none;"></div>
       <div class="calc-grid">
         <div>
           <div class="card">
-            <h4>Custo dos materiais</h4>
-            <p class="sub">Preço que você paga por unidade de cada material. Editando aqui, o preço de todos os modelos salvos atualiza sozinho.</p>
+            <h4>Custo e estoque dos materiais</h4>
+            <p class="sub">Preço que você paga por unidade de cada material, e quanto tem em estoque agora. Editando o custo aqui, o preço de todos os modelos salvos atualiza sozinho.</p>
             <div class="materials-list" id="materialsList"><!-- filled by calculadora.js --></div>
-            <button class="btn-primary" id="saveMaterialsBtn" style="margin-top:14px;">Salvar custos dos materiais</button>
+            <button class="btn-primary" id="saveMaterialsBtn" style="margin-top:14px;">Salvar custos e estoque mínimo</button>
+          </div>
+
+          <div class="card">
+            <h4>Registrar compra de material</h4>
+            <p class="sub">Adiciona ao estoque e já atualiza o custo por unidade desse material.</p>
+            <div class="field" style="margin-bottom:12px;">
+              <label for="purchaseMaterial">Material</label>
+              <select id="purchaseMaterial"><!-- filled by calculadora.js --></select>
+            </div>
+            <div class="materials-qty-grid" style="margin-bottom:12px;">
+              <div class="field">
+                <label for="purchaseQty">Quantidade comprada</label>
+                <input type="number" id="purchaseQty" min="0" step="0.01" placeholder="Ex: 500">
+              </div>
+              <div class="field">
+                <label for="purchaseCost">Valor total pago (R$)</label>
+                <input type="number" id="purchaseCost" min="0" step="0.01" placeholder="Ex: 45,00">
+              </div>
+            </div>
+            <div class="field" style="margin-bottom:14px;">
+              <label for="purchaseNotes">Observações (opcional)</label>
+              <input type="text" id="purchaseNotes" placeholder="Ex: comprado na loja X">
+            </div>
+            <button class="btn-primary" id="registerPurchaseBtn" type="button">Registrar compra</button>
+            <div class="recent-list" id="recentPurchases"><!-- filled by calculadora.js --></div>
           </div>
 
           <div class="card">
@@ -127,6 +153,32 @@
         </div>
 
         <div>
+          <div class="card">
+            <h4>Registrar venda de terço</h4>
+            <p class="sub">Escolhe o modelo vendido — desconta os materiais do estoque e mostra o lucro na hora.</p>
+            <div class="field" style="margin-bottom:12px;">
+              <label for="saleModel">Modelo vendido</label>
+              <select id="saleModel"><!-- filled by calculadora.js --></select>
+            </div>
+            <div class="materials-qty-grid" style="margin-bottom:12px;">
+              <div class="field">
+                <label for="saleQty">Quantidade vendida</label>
+                <input type="number" id="saleQty" min="1" step="1" value="1">
+              </div>
+              <div class="field">
+                <label for="salePrice">Preço de venda (R$, por unidade)</label>
+                <input type="number" id="salePrice" min="0" step="0.01" placeholder="preenchido automático">
+              </div>
+            </div>
+            <div class="field" style="margin-bottom:14px;">
+              <label for="saleNotes">Observações (opcional)</label>
+              <input type="text" id="saleNotes" placeholder="Ex: venda feita pessoalmente">
+            </div>
+            <div class="calc-result" id="saleResult" style="display:none;"><!-- filled by calculadora.js --></div>
+            <button class="btn-primary" id="registerSaleBtn" type="button" style="margin-top:14px;">Registrar venda</button>
+            <div class="recent-list" id="recentSales"><!-- filled by calculadora.js --></div>
+          </div>
+
           <div class="card">
             <h4>Modelos salvos</h4>
             <div id="modelsList"><!-- filled by calculadora.js --></div>
