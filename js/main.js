@@ -158,10 +158,18 @@ document.querySelectorAll('#tamanhoChoice .choice-btn').forEach(function(btn){
     }
     document.getElementById('corSub').textContent = 'Contas de ' + customState.tamanho + ' disponíveis em 3 cores';
     updateCorGroupVisibility();
+    updateNomePriceLabel();
     recalcPrice();
     updateCustomSummary();
   });
 });
+
+function updateNomePriceLabel(){
+  var tier = PRICE_TABLE[customState.tamanho];
+  var delta = tier.comNome - tier.base;
+  document.getElementById('nomePriceLabel').textContent =
+    'Quero o nome em miçangas de letras (+' + formatBRL(delta) + ')';
+}
 
 document.querySelectorAll('#corChoice6mm .swatch, #corChoice8mm .swatch').forEach(function(btn){
   btn.addEventListener('click', function(){
@@ -333,6 +341,7 @@ function addCustomToCart(){
 }
 
 updateTipoVisibility();
+updateNomePriceLabel();
 updateCustomSummary();
 
 function changeCartQty(id, delta){

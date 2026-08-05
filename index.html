@@ -39,23 +39,42 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Lora:ital,wght@0,400;0,500;1,400&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Product",
-  "name": "Terço Nossa Senhora Aparecida",
-  "image": "https://perolas-de-maria.vercel.app/assets/images/terco-aparecida-1.jpg",
-  "brand": {
-    "@type": "Brand",
-    "name": "Pérolas de Maria"
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Terço-Pulseira de São Bento",
+    "image": "https://perolas-de-maria.vercel.app/assets/images/pulseira-sao-bento-1.jpg",
+    "brand": {
+      "@type": "Brand",
+      "name": "Pérolas de Maria"
+    },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "BRL",
+      "price": "14.90",
+      "availability": "https://schema.org/InStock",
+      "url": "https://perolas-de-maria.vercel.app/#produtos"
+    }
   },
-  "offers": {
-    "@type": "Offer",
-    "priceCurrency": "BRL",
-    "price": "39.90",
-    "availability": "https://schema.org/InStock",
-    "url": "https://perolas-de-maria.vercel.app/#produtos"
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Terço Nossa Senhora Aparecida",
+    "image": "https://perolas-de-maria.vercel.app/assets/images/terco-aparecida-1.jpg",
+    "brand": {
+      "@type": "Brand",
+      "name": "Pérolas de Maria"
+    },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "BRL",
+      "price": "39.90",
+      "availability": "https://schema.org/InStock",
+      "url": "https://perolas-de-maria.vercel.app/#produtos"
+    }
   }
-}
+]
 </script>
 <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -145,6 +164,49 @@
     <span class="eyebrow">Nossa coleção</span>
     <h2>Terços artesanais</h2>
     <p>Contas de pérola, entremeio esmaltado e crucifixo dourado — cada detalhe escolhido para durar e abençoar.</p>
+  </div>
+
+  <div class="product-card novidade-card" data-product-id="pulseira-sao-bento" data-product-name="Terço-Pulseira de São Bento" data-product-price="14.90">
+    <div class="gallery">
+      <div class="gallery-main">
+        <span class="novidade-badge">✦ Novidade</span>
+        <img class="main-img" src="assets/images/pulseira-sao-bento-1.jpg" alt="Terço-Pulseira de São Bento">
+      </div>
+      <div class="gallery-thumbs">
+        <img class="active" data-full="assets/images/pulseira-sao-bento-1.jpg" src="assets/images/pulseira-sao-bento-1.jpg" alt="Vista 1">
+        <img data-full="assets/images/pulseira-sao-bento-2.jpg" src="assets/images/pulseira-sao-bento-2.jpg" alt="Vista 2">
+      </div>
+    </div>
+    <div class="product-info">
+      <span class="eyebrow">Novo ramo · terço de pulso</span>
+      <h3>Terço-Pulseira de São Bento</h3>
+      <div class="stars">★★★★★</div>
+      <div class="product-desc">
+        Fé e proteção direto no pulso: pulseira dupla volta em contas de hematita importada, medalha de São Bento (frente e verso) e crucifixo de São Bento. Fecho em inox tipo mosquetão, 22cm de comprimento.
+        <ul>
+          <li>Contas de hematita importada</li>
+          <li>Medalha de São Bento nos dois lados</li>
+          <li>Crucifixo de São Bento</li>
+          <li>Fecho em inox, 22cm</li>
+        </ul>
+      </div>
+      <div class="price-row">
+        <span class="price">R$ 14,90</span>
+        <span class="price-note">à vista no Pix</span>
+      </div>
+      <div class="qty-row">
+        <div class="qty-stepper">
+          <button class="qty-minus">–</button>
+          <span class="qty-display">1</span>
+          <button class="qty-plus">+</button>
+        </div>
+        <button class="add-cart-btn">Adicionar ao carrinho</button>
+      </div>
+      <div class="ship-note">
+        <span>✦</span>
+        <span>Peça artesanal — pequenas variações entre peças fazem parte da produção manual. Envio combinado após confirmação do pagamento.</span>
+      </div>
+    </div>
   </div>
 
   <div class="product-card" data-product-id="terco-aparecida" data-product-name="Terço Nossa Senhora Aparecida" data-product-price="39.90">
@@ -324,7 +386,7 @@
         <h4>4. Nome personalizado</h4>
         <label class="name-toggle-row">
           <input type="checkbox" id="nomeToggle">
-          <span>Quero o nome em miçangas de letras (+R$ 3,00)</span>
+          <span id="nomePriceLabel">Quero o nome em miçangas de letras (+R$ 3,00)</span>
           <span class="preview-trigger" data-preview="assets/images/miscanga-letras.jpg">🔍 ver miçangas</span>
         </label>
         <div class="field" id="nomeFieldWrap" style="display:none;margin-top:12px;margin-bottom:0;">
