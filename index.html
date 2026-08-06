@@ -114,6 +114,56 @@
   </div>
 </header>
 
+<!-- ============ Promo carousel — the "biggest hits + current promo" strip ============ -->
+<section class="promo-carousel" id="promoCarousel" aria-label="Destaques e promoções">
+  <div class="carousel-track" id="carouselTrack">
+
+    <a class="carousel-slide" href="#produtos">
+      <img src="assets/images/terco-aparecida-1.jpg" alt="Terço Nossa Senhora Aparecida">
+      <div class="carousel-overlay">
+        <span class="carousel-eyebrow">Mais pedido</span>
+        <h3>Terço Nossa Senhora Aparecida</h3>
+        <p>Contas de pérola azul royal, feito à mão — R$ 39,90</p>
+        <span class="carousel-cta">Ver terço →</span>
+      </div>
+    </a>
+
+    <a class="carousel-slide" href="#produtos">
+      <img src="assets/images/pulseira-sao-bento-1.jpg" alt="Terço-Pulseira de São Bento">
+      <div class="carousel-overlay">
+        <span class="carousel-eyebrow">✦ Novidade</span>
+        <h3>Terço-Pulseira de São Bento</h3>
+        <p>Fé e proteção no pulso, hematita importada — R$ 14,90</p>
+        <span class="carousel-cta">Ver pulseira →</span>
+      </div>
+    </a>
+
+    <a class="carousel-slide" href="#personalizados">
+      <img src="assets/images/catalogo-personalizado.jpg" alt="Terços personalizados">
+      <div class="carousel-overlay">
+        <span class="carousel-eyebrow">Do seu jeito</span>
+        <h3>Monte seu terço personalizado</h3>
+        <p>Escolha a cor, o tamanho e até o nome nas miçangas</p>
+        <span class="carousel-cta">Personalizar →</span>
+      </div>
+    </a>
+
+    <a class="carousel-slide carousel-slide-promo" href="https://wa.me/5532999976067?text=Ol%C3%A1!%20Quero%20encomendar%20aproveitando%20a%20promo%C3%A7%C3%A3o%20de%20Dia%20dos%20Pais." target="_blank" rel="noopener">
+      <img src="assets/images/promo-dia-dos-pais.jpg" alt="Promoção especial Dia dos Pais">
+      <div class="carousel-overlay carousel-overlay-promo">
+        <span class="carousel-eyebrow">Promoção · Dia dos Pais</span>
+        <p class="carousel-whatsapp-note">📲 Promoção só por encomenda — peça pelo WhatsApp</p>
+        <span class="carousel-cta">Chamar no WhatsApp →</span>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="carousel-dots" id="carouselDots"></div>
+  <button class="carousel-arrow carousel-arrow-prev" id="carouselPrev" aria-label="Slide anterior">‹</button>
+  <button class="carousel-arrow carousel-arrow-next" id="carouselNext" aria-label="Próximo slide">›</button>
+</section>
+
 <section class="hero" id="inicio">
   <div class="hero-copy">
     <span class="eyebrow">Feito à mão · peça a peça</span>
@@ -634,6 +684,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Your Supabase project URL + public anon key live here -->
 <script src="js/supabase-client.js"></script>
+<!-- Promo carousel at the top of the page — self-contained, no Supabase needed -->
+<script src="js/carousel.js"></script>
 <!-- Site behaviour: cart, gallery, configurator, theme toggle (unchanged from before) -->
 <script src="js/main.js"></script>
 <!-- New: saves the order to Supabase, then hands off to WhatsApp -->
