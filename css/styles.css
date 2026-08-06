@@ -178,7 +178,7 @@
   .carousel-slide img{
     position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   }
-  .carousel-slide-promo img{object-fit:contain;background:#F3EAD8;}
+  .carousel-slide-promo img, .carousel-slide-contain img{object-fit:contain;background:#F3EAD8;}
   .carousel-overlay{
     position:absolute;inset:0;
     background:linear-gradient(90deg, rgba(20,17,10,.72) 0%, rgba(20,17,10,.35) 45%, rgba(20,17,10,0) 75%);

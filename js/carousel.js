@@ -16,7 +16,7 @@
 
   let index = 0;
   let autoplayTimer = null;
-  const AUTOPLAY_MS = 5000;
+  const AUTOPLAY_MS = 7500;
 
   // build the dot indicators
   slides.forEach((_, i) => {
@@ -30,7 +30,7 @@
 
   function goTo(i){
     index = (i + slides.length) % slides.length;
-    slides[index].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+    track.scrollTo({ left: index * track.clientWidth, behavior: 'smooth' });
     dots.forEach((d, di) => d.classList.toggle('active', di === index));
   }
 
