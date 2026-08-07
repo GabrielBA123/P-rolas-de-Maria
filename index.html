@@ -116,6 +116,7 @@
 
 <!-- ============ Promo carousel — the "biggest hits + current promo" strip ============ -->
 <section class="promo-carousel" id="promoCarousel" aria-label="Destaques e promoções">
+  <div class="carousel-viewport">
   <div class="carousel-track" id="carouselTrack">
 
     <a class="carousel-slide" href="#produtos">
@@ -149,19 +150,21 @@
     </a>
 
     <a class="carousel-slide carousel-slide-promo" href="https://wa.me/5532999976067?text=Ol%C3%A1!%20Quero%20encomendar%20aproveitando%20a%20promo%C3%A7%C3%A3o%20de%20Dia%20dos%20Pais." target="_blank" rel="noopener">
-      <img src="assets/images/promo-dia-dos-pais.jpg" alt="Promoção especial Dia dos Pais">
-      <div class="carousel-overlay carousel-overlay-promo">
-        <span class="carousel-eyebrow">Promoção · Dia dos Pais</span>
-        <p class="carousel-whatsapp-note">📲 Promoção só por encomenda — peça pelo WhatsApp</p>
+      <div class="carousel-promo-image">
+        <img src="assets/images/promo-dia-dos-pais.jpg" alt="Promoção especial Dia dos Pais">
+      </div>
+      <div class="carousel-promo-caption">
+        <span class="carousel-whatsapp-note">📲 Promoção só por encomenda — peça pelo WhatsApp</span>
         <span class="carousel-cta">Chamar no WhatsApp →</span>
       </div>
     </a>
 
   </div>
-
-  <div class="carousel-dots" id="carouselDots"></div>
   <button class="carousel-arrow carousel-arrow-prev" id="carouselPrev" aria-label="Slide anterior">‹</button>
   <button class="carousel-arrow carousel-arrow-next" id="carouselNext" aria-label="Próximo slide">›</button>
+  </div>
+
+  <div class="carousel-dots" id="carouselDots"></div>
 </section>
 
 <section class="hero" id="inicio">
