@@ -38,12 +38,12 @@ function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
    ========================================================================== */
 async function initCalculadora(){
   renderMaterialsList([]); // placeholder rows while loading
-  renderModelQtyInputs();
   wireMarginChoice();
   wireLiveCalc();
   wirePurchaseForm();
   wireSaleForm();
   await loadMaterials();
+  renderModelQtyInputs();
   await loadModels();
 }
 
@@ -123,17 +123,27 @@ document.getElementById('saveMaterialsBtn').addEventListener('click', async () =
    Model quantity inputs (the "how many units does this model use" form)
    ========================================================================== */
 function renderModelQtyInputs(){
-  const labels = { perolas: 'Pérolas (un)', crucifixo: 'Crucifixo (un)', entremeio: 'Entremeio (un)',
-    fio: 'Fio (un)', embalagem: 'Embalagem (un)', outros: 'Outros (un)' };
+  const labels = { perolas: 'Pérolas', crucifixo: 'Crucifixo', entremeio: 'Entremeio',
+    fio: 'Fio', embalagem: 'Embalagem', outros: 'Outros' };
   const el = document.getElementById('modelQtyInputs');
   el.innerHTML = MATERIAL_KEYS.map(k => `
-    <div class="field">
-      <label for="qty-${k}">${labels[k]}</label>
-      <input type="number" id="qty-${k}" min="0" step="1" value="0">
+    <div class="model-material-row">
+      <label>${labels[k]}</label>
+      <div class="mini-field-pair">
+        <div class="mini-field">
+          <span>Quantidade usada</span>
+          <input type="number" id="qty-${k}" min="0" step="1" value="0">
+        </div>
+        <div class="mini-field">
+          <span>Custo p/ este modelo (R$)</span>
+          <input type="number" id="cost-${k}" min="0" step="0.0001" value="${getGlobalMaterialCost(k)}">
+        </div>
+      </div>
     </div>
   `).join('');
   MATERIAL_KEYS.forEach(k => {
     document.getElementById('qty-' + k).addEventListener('input', updateCalcResult);
+    document.getElementById('cost-' + k).addEventListener('input', updateCalcResult);
   });
 }
 
@@ -164,26 +174,28 @@ function getCurrentMargin(){
   return selected ? parseFloat(selected.dataset.margin) : 50;
 }
 
-function getMaterialCost(key){
+function getGlobalMaterialCost(key){
   const m = materials.find(x => x.key === key);
   return m ? Number(m.unit_cost) : 0;
 }
 
-function calcModelPrice(qtyByKey, marginPercent){
-  const custo = MATERIAL_KEYS.reduce((sum, k) => sum + getMaterialCost(k) * (qtyByKey[k] || 0), 0);
+function calcModelPrice(qtyByKey, costByKey, marginPercent){
+  const custo = MATERIAL_KEYS.reduce((sum, k) => sum + (costByKey[k] || 0) * (qtyByKey[k] || 0), 0);
   const lucro = custo * (marginPercent / 100);
   const preco = custo + lucro;
   return { custo, lucro, preco };
 }
 
 function updateCalcResult(){
-  const qty = {};
+  const qty = {}, cost = {};
   MATERIAL_KEYS.forEach(k => {
-    const input = document.getElementById('qty-' + k);
-    qty[k] = input ? parseFloat(input.value) || 0 : 0;
+    const qtyInput = document.getElementById('qty-' + k);
+    const costInput = document.getElementById('cost-' + k);
+    qty[k] = qtyInput ? parseFloat(qtyInput.value) || 0 : 0;
+    cost[k] = costInput ? parseFloat(costInput.value) || 0 : 0;
   });
   const margin = getCurrentMargin();
-  const { custo, lucro, preco } = calcModelPrice(qty, margin);
+  const { custo, lucro, preco } = calcModelPrice(qty, cost, margin);
 
   document.getElementById('calcResult').innerHTML = `
     <div class="row"><strong>Custo total:</strong><span>${calcFormatBRL(custo)}</span></div>
@@ -200,7 +212,10 @@ document.getElementById('clearModelBtn').addEventListener('click', () => {
   editingModelId = null;
   document.getElementById('modelFormTitle').textContent = 'Novo modelo de terço';
   document.getElementById('modelName').value = '';
-  MATERIAL_KEYS.forEach(k => { document.getElementById('qty-' + k).value = 0; });
+  MATERIAL_KEYS.forEach(k => {
+    document.getElementById('qty-' + k).value = 0;
+    document.getElementById('cost-' + k).value = getGlobalMaterialCost(k);
+  });
   document.getElementById('marginCustom').value = '';
   document.querySelectorAll('#marginChoice .choice-btn').forEach(b =>
     b.classList.toggle('selected', b.dataset.margin === '50')
@@ -215,6 +230,7 @@ document.getElementById('saveModelBtn').addEventListener('click', async () => {
   const payload = { name, margin_percent: getCurrentMargin() };
   MATERIAL_KEYS.forEach(k => {
     payload['qty_' + k] = parseFloat(document.getElementById('qty-' + k).value) || 0;
+    payload['cost_' + k] = parseFloat(document.getElementById('cost-' + k).value) || 0;
   });
 
   const query = editingModelId
@@ -245,9 +261,9 @@ function renderModelsList(){
     return;
   }
   el.innerHTML = savedModels.map(m => {
-    const qty = {};
-    MATERIAL_KEYS.forEach(k => { qty[k] = m['qty_' + k]; });
-    const { preco } = calcModelPrice(qty, m.margin_percent);
+    const qty = {}, cost = {};
+    MATERIAL_KEYS.forEach(k => { qty[k] = m['qty_' + k]; cost[k] = m['cost_' + k]; });
+    const { preco } = calcModelPrice(qty, cost, m.margin_percent);
     return `
       <div class="model-card">
         <div class="model-head">
@@ -271,7 +287,10 @@ function editModel(id){
   editingModelId = id;
   document.getElementById('modelFormTitle').textContent = 'Editando: ' + m.name;
   document.getElementById('modelName').value = m.name;
-  MATERIAL_KEYS.forEach(k => { document.getElementById('qty-' + k).value = m['qty_' + k]; });
+  MATERIAL_KEYS.forEach(k => {
+    document.getElementById('qty-' + k).value = m['qty_' + k];
+    document.getElementById('cost-' + k).value = m['cost_' + k];
+  });
 
   const presetBtn = document.querySelector('#marginChoice .choice-btn[data-margin="' + m.margin_percent + '"]');
   document.querySelectorAll('#marginChoice .choice-btn').forEach(b => b.classList.remove('selected'));
@@ -380,9 +399,9 @@ function updateSalePricePlaceholder(){
   const model = savedModels.find(m => m.id === document.getElementById('saleModel').value);
   const priceInput = document.getElementById('salePrice');
   if(!model){ return; }
-  const qty = {};
-  MATERIAL_KEYS.forEach(k => { qty[k] = model['qty_' + k]; });
-  const { preco } = calcModelPrice(qty, model.margin_percent);
+  const qty = {}, cost = {};
+  MATERIAL_KEYS.forEach(k => { qty[k] = model['qty_' + k]; cost[k] = model['cost_' + k]; });
+  const { preco } = calcModelPrice(qty, cost, model.margin_percent);
   priceInput.value = preco.toFixed(2);
 }
 

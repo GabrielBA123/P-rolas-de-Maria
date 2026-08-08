@@ -125,6 +125,17 @@ main{max-width:1280px;margin:0 auto;padding:28px;}
 }
 
 .materials-qty-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.model-material-row{padding:8px 0;border-bottom:1px dashed var(--line);}
+.model-material-row:last-child{border-bottom:none;}
+.model-material-row label{
+  display:block;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:600;
+  color:var(--ink);margin-bottom:6px;
+}
+.model-material-row .mini-field-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.model-material-row .mini-field-pair input{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+  font-family:'Lora',serif;font-size:.88rem;background:#fff;color:var(--ink);
+}
 .materials-qty-grid .field label{font-size:.76rem;}
 
 .low-stock-banner{

@@ -454,6 +454,86 @@ end;
 $$;
 grant execute on function public.register_sale(uuid, integer, numeric, text) to authenticated;
 
+-- --------------------------------------------------------------------------
+-- 10) Per-model material costs — each terço model now keeps its own cost
+--     per material (the same material can cost more in one model than
+--     another, e.g. nicer pearls). Editing a model's own cost no longer
+--     changes any other model's price. The material's global unit_cost
+--     (from step 8) is now only used as a starting suggestion when
+--     creating a brand new model, and still drives stock/purchases.
+-- --------------------------------------------------------------------------
+
+alter table public.price_models
+  add column if not exists cost_perolas    numeric(10,4) not null default 0,
+  add column if not exists cost_crucifixo  numeric(10,4) not null default 0,
+  add column if not exists cost_entremeio  numeric(10,4) not null default 0,
+  add column if not exists cost_fio        numeric(10,4) not null default 0,
+  add column if not exists cost_embalagem  numeric(10,4) not null default 0,
+  add column if not exists cost_outros     numeric(10,4) not null default 0;
+
+-- one-time backfill: give existing models the current global costs so
+-- their price doesn't suddenly drop to zero after this migration
+update public.price_models m
+set cost_perolas   = coalesce((select unit_cost from public.price_materials where key = 'perolas'), 0),
+    cost_crucifixo = coalesce((select unit_cost from public.price_materials where key = 'crucifixo'), 0),
+    cost_entremeio = coalesce((select unit_cost from public.price_materials where key = 'entremeio'), 0),
+    cost_fio       = coalesce((select unit_cost from public.price_materials where key = 'fio'), 0),
+    cost_embalagem = coalesce((select unit_cost from public.price_materials where key = 'embalagem'), 0),
+    cost_outros    = coalesce((select unit_cost from public.price_materials where key = 'outros'), 0)
+where m.cost_perolas = 0 and m.cost_crucifixo = 0 and m.cost_entremeio = 0
+  and m.cost_fio = 0 and m.cost_embalagem = 0 and m.cost_outros = 0;
+
+-- register_sale() now costs the sale using the MODEL's own cost_* columns
+-- instead of joining the shared price_materials table.
+create or replace function public.register_sale(
+  p_model_id   uuid,
+  p_quantity   integer,
+  p_unit_price numeric,
+  p_notes      text
+)
+returns public.stock_sales
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_model     public.price_models;
+  v_unit_cost numeric(10,2) := 0;
+  v_row       public.stock_sales;
+begin
+  select * into v_model from public.price_models where id = p_model_id;
+  if not found then
+    raise exception 'Modelo de terço não encontrado.';
+  end if;
+
+  v_unit_cost :=
+    v_model.qty_perolas   * v_model.cost_perolas +
+    v_model.qty_crucifixo * v_model.cost_crucifixo +
+    v_model.qty_entremeio * v_model.cost_entremeio +
+    v_model.qty_fio       * v_model.cost_fio +
+    v_model.qty_embalagem * v_model.cost_embalagem +
+    v_model.qty_outros    * v_model.cost_outros;
+
+  insert into public.stock_sales (model_id, quantity, unit_price, unit_cost, profit, notes)
+  values (
+    p_model_id, p_quantity, p_unit_price, v_unit_cost,
+    (p_unit_price - v_unit_cost) * p_quantity,
+    nullif(p_notes, '')
+  )
+  returning * into v_row;
+
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_perolas * p_quantity) where key = 'perolas';
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_crucifixo * p_quantity) where key = 'crucifixo';
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_entremeio * p_quantity) where key = 'entremeio';
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_fio * p_quantity) where key = 'fio';
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_embalagem * p_quantity) where key = 'embalagem';
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_outros * p_quantity) where key = 'outros';
+
+  return v_row;
+end;
+$$;
+grant execute on function public.register_sale(uuid, integer, numeric, text) to authenticated;
+
 -- ==========================================================================
 -- Done. Next: Authentication → Users → Add user, to create your first
 -- admin login (see README.md, step 4).

@@ -13,12 +13,10 @@
   const viewport = track.parentElement;
   const slides = Array.from(track.children);
   const dotsWrap = document.getElementById('carouselDots');
-  const prevBtn = document.getElementById('carouselPrev');
-  const nextBtn = document.getElementById('carouselNext');
 
   let index = 0;
   let autoplayTimer = null;
-  const AUTOPLAY_MS = 7500;
+  const AUTOPLAY_MS = 5000;
 
   // build the dot indicators
   slides.forEach((_, i) => {
@@ -39,9 +37,6 @@
     index = (i + slides.length) % slides.length;
     render();
   }
-
-  prevBtn.addEventListener('click', () => { goTo(index - 1); restartAutoplay(); });
-  nextBtn.addEventListener('click', () => { goTo(index + 1); restartAutoplay(); });
 
   function startAutoplay(){
     stopAutoplay();
