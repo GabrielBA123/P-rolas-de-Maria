@@ -86,6 +86,11 @@ function removeFromCart(id){
 }
 
 // ---------- personalized terço configurator ----------
+// Guarded: only runs on pages that actually have the #personalizados
+// section (the homepage). Without this check, the calls at the bottom
+// of this block would throw on pages that don't include it (like the
+// standalone product pages) and silently break everything after them.
+if(document.getElementById('personalizados')){
 var PRICE_TABLE = {
   '6mm': { base: 19.90, comNome: 22.90 },
   '8mm': { base: 24.90, comNome: 26.90 }
@@ -343,6 +348,7 @@ function addCustomToCart(){
 updateTipoVisibility();
 updateNomePriceLabel();
 updateCustomSummary();
+} // end of #personalizados guard
 
 function changeCartQty(id, delta){
   var item = cart.find(function(i){return i.id === id;});
@@ -438,6 +444,8 @@ function showToast(text){
 }
 
 // ---------- example gallery lightbox (click a card, see all 3 photos) ----------
+// Guarded the same way as the personalizador block above.
+if(document.getElementById('lightboxOverlay')){
 var lightboxOverlay = document.getElementById('lightboxOverlay');
 var lightboxMainImg = document.getElementById('lightboxMainImg');
 var lightboxThumbs = document.getElementById('lightboxThumbs');
@@ -478,6 +486,7 @@ lightboxOverlay.addEventListener('click', function(e){
 document.addEventListener('keydown', function(e){
   if(e.key === 'Escape') closeLightbox();
 });
+} // end of lightbox guard
 
 renderCart();
 
