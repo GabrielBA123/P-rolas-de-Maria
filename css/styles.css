@@ -317,7 +317,7 @@
 
   /* ---------- Catalog grid ("Mais terços") ---------- */
   .catalog-grid{
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:28px;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:30px;
   }
   .catalog-card{
     position:relative;display:block;text-decoration:none;color:inherit;
@@ -329,12 +329,25 @@
   .catalog-img{aspect-ratio:1/1;background:#fff;}
   .catalog-img img{width:100%;height:100%;object-fit:cover;display:block;}
   .catalog-img.gallery-contain img{object-fit:contain;background:#F3EAD8;}
-  .catalog-info{padding:16px 18px;text-align:center;}
+  .catalog-info{padding:18px 20px 20px;text-align:center;}
   .catalog-info h4{
-    font-family:'Cormorant Garamond',serif;font-size:1.25rem;color:var(--heading);
+    font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--heading);
     margin:0 0 6px;line-height:1.25;
   }
-  .catalog-price{font-family:'Jost',sans-serif;font-size:.9rem;color:var(--gold);font-weight:600;}
+  .catalog-desc{
+    font-family:'Lora',serif;font-size:.85rem;color:var(--ink-soft);
+    margin:0 0 10px;line-height:1.5;
+  }
+  .catalog-price{font-family:'Jost',sans-serif;font-size:.95rem;color:var(--gold);font-weight:600;}
+
+  .more-products-head{
+    text-align:center;margin:52px 0 30px;
+  }
+  .more-products-head span{
+    font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.15rem;color:var(--gold);
+    display:block;margin-bottom:6px;
+  }
+  .more-products-head h3{font-size:1.6rem;margin:0;}
 
   .breadcrumb-bar{
     max-width:1180px;margin:0 auto;padding:20px 28px 0;
