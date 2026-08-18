@@ -490,6 +490,32 @@ document.addEventListener('keydown', function(e){
 
 renderCart();
 
+// ---------- catalog cards ("Mais modelos") — quick add-to-cart ----------
+// Adds straight to the cart without opening the product page. Works for
+// any number of `.catalog-card[data-product-id]` cards, same pattern as
+// the full product-card handler above.
+document.querySelectorAll('.catalog-card[data-product-id]').forEach(function(card){
+  var btn = card.querySelector('.catalog-cart-btn');
+  if(!btn) return;
+  btn.addEventListener('click', function(e){
+    e.preventDefault();
+    var id = card.dataset.productId;
+    var name = card.dataset.productName;
+    var price = parseFloat(card.dataset.productPrice);
+    var img = card.dataset.productImg;
+
+    var existing = cart.find(function(i){ return i.id === id; });
+    if(existing){ existing.qty += 1; }
+    else { cart.push({ id: id, name: name, price: price, img: img, qty: 1 }); }
+
+    renderCart();
+    showToast('Adicionado ao carrinho');
+
+    btn.classList.add('added');
+    setTimeout(function(){ btn.classList.remove('added'); }, 1400);
+  });
+});
+
 // ---------- theme toggle (light / dark) ----------
 (function(){
   var root = document.documentElement;

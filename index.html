@@ -196,6 +196,7 @@
     <p>Cada terço da Pérolas de Maria é montado à mão, conta por conta, com carinho e devoção — para acompanhar suas orações e ser lembrança de quem você ama.</p>
     <div class="hero-ctas">
       <button class="btn-primary" onclick="document.getElementById('produtos').scrollIntoView({behavior:'smooth'})">Ver terços</button>
+      <button class="btn-ghost" onclick="document.getElementById('personalizados').scrollIntoView({behavior:'smooth'})">Montar meu terço personalizado</button>
     </div>
   </div>
   <div class="hero-art">
@@ -290,33 +291,57 @@
     <h3>Pulseiras e chaveiro artesanais</h3>
   </div>
   <div class="catalog-grid">
-    <a class="catalog-card" href="produto-chaveiro-aparecida.html">
-      <span class="novidade-badge catalog-badge">✦ Novidade</span>
-      <div class="catalog-img gallery-contain"><img src="assets/images/chaveiro-aparecida.jpg" alt="Chaveiro Nossa Senhora Aparecida" loading="lazy"></div>
-      <div class="catalog-info">
-        <h4>Chaveiro Nossa Senhora Aparecida</h4>
-        <p class="catalog-desc">Strass e detalhes dourados, acabamento delicado.</p>
-        <span class="catalog-price">R$ 7,90</span>
+    <div class="catalog-card" data-product-id="chaveiro-aparecida" data-product-name="Chaveiro Nossa Senhora Aparecida" data-product-price="7.90" data-product-img="assets/images/chaveiro-aparecida.jpg">
+      <a href="produto-chaveiro-aparecida.html" class="catalog-card-link">
+        <span class="novidade-badge catalog-badge">✦ Novidade</span>
+        <div class="catalog-img gallery-contain"><img src="assets/images/chaveiro-aparecida.jpg" alt="Chaveiro Nossa Senhora Aparecida" loading="lazy"></div>
+        <div class="catalog-info">
+          <h4>Chaveiro Nossa Senhora Aparecida</h4>
+          <p class="catalog-desc">Strass e detalhes dourados, acabamento delicado.</p>
+          <span class="catalog-price">R$ 7,90</span>
+        </div>
+      </a>
+      <div class="catalog-actions">
+        <a href="produto-chaveiro-aparecida.html" class="catalog-view-btn">Ver mais</a>
+        <button type="button" class="catalog-cart-btn" aria-label="Adicionar ao carrinho">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        </button>
       </div>
-    </a>
-    <a class="catalog-card" href="produto-pulseira-sao-bento-branco.html">
-      <span class="novidade-badge catalog-badge">✦ Novidade</span>
-      <div class="catalog-img"><img src="assets/images/pulseira-sao-bento-branco-1.jpg" alt="Terço-Pulseira de São Bento Branco" loading="lazy"></div>
-      <div class="catalog-info">
-        <h4>Terço-Pulseira de São Bento Branco</h4>
-        <p class="catalog-desc">Pérolas 5mm, medalhão e crucifixo de São Bento.</p>
-        <span class="catalog-price">R$ 14,90</span>
+    </div>
+    <div class="catalog-card" data-product-id="pulseira-sao-bento-branco" data-product-name="Terço-Pulseira de São Bento Branco" data-product-price="14.90" data-product-img="assets/images/pulseira-sao-bento-branco-1.jpg">
+      <a href="produto-pulseira-sao-bento-branco.html" class="catalog-card-link">
+        <span class="novidade-badge catalog-badge">✦ Novidade</span>
+        <div class="catalog-img"><img src="assets/images/pulseira-sao-bento-branco-1.jpg" alt="Terço-Pulseira de São Bento Branco" loading="lazy"></div>
+        <div class="catalog-info">
+          <h4>Terço-Pulseira de São Bento Branco</h4>
+          <p class="catalog-desc">Pérolas 5mm, medalhão e crucifixo de São Bento.</p>
+          <span class="catalog-price">R$ 14,90</span>
+        </div>
+      </a>
+      <div class="catalog-actions">
+        <a href="produto-pulseira-sao-bento-branco.html" class="catalog-view-btn">Ver mais</a>
+        <button type="button" class="catalog-cart-btn" aria-label="Adicionar ao carrinho">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        </button>
       </div>
-    </a>
-    <a class="catalog-card" href="produto-pulseira-sao-bento.html">
-      <span class="novidade-badge catalog-badge">✦ Novidade</span>
-      <div class="catalog-img"><img src="assets/images/pulseira-sao-bento-1.jpg" alt="Terço-Pulseira de São Bento" loading="lazy"></div>
-      <div class="catalog-info">
-        <h4>Terço-Pulseira de São Bento</h4>
-        <p class="catalog-desc">Hematita importada, medalha e crucifixo de São Bento.</p>
-        <span class="catalog-price">R$ 14,90</span>
+    </div>
+    <div class="catalog-card" data-product-id="pulseira-sao-bento" data-product-name="Terço-Pulseira de São Bento" data-product-price="14.90" data-product-img="assets/images/pulseira-sao-bento-1.jpg">
+      <a href="produto-pulseira-sao-bento.html" class="catalog-card-link">
+        <span class="novidade-badge catalog-badge">✦ Novidade</span>
+        <div class="catalog-img"><img src="assets/images/pulseira-sao-bento-1.jpg" alt="Terço-Pulseira de São Bento" loading="lazy"></div>
+        <div class="catalog-info">
+          <h4>Terço-Pulseira de São Bento</h4>
+          <p class="catalog-desc">Hematita importada, medalha e crucifixo de São Bento.</p>
+          <span class="catalog-price">R$ 14,90</span>
+        </div>
+      </a>
+      <div class="catalog-actions">
+        <a href="produto-pulseira-sao-bento.html" class="catalog-view-btn">Ver mais</a>
+        <button type="button" class="catalog-cart-btn" aria-label="Adicionar ao carrinho">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        </button>
       </div>
-    </a>
+    </div>
   </div>
 
 </section>
@@ -327,62 +352,6 @@
     <span class="eyebrow">Sob encomenda</span>
     <h2>Terços personalizados</h2>
     <p>Monte o seu terço completo (5 dezenas) do seu jeito, direto por aqui — escolha o tipo, a cor, o estilo do Pai Nosso e o santo(a) do entremeio.</p>
-  </div>
-
-  <div class="examples-intro">
-    <span class="eyebrow">Exemplos já feitos</span>
-    <h3>Inspire-se antes de montar o seu</h3>
-    <p>Esses terços abaixo não são vendidos como estão — são exemplos reais do que já fizemos, pra te ajudar a escolher a cor, o estilo e imaginar o resultado. Monte a sua combinação no personalizador logo abaixo.</p>
-  </div>
-  <div class="examples-grid">
-        <div class="example-card" data-images="assets/images/flores-de-jesus-1.jpg,assets/images/flores-de-jesus-2.jpg,assets/images/flores-de-jesus-3.jpg" data-name="Terço Flores de Jesus">
-          <img src="assets/images/flores-de-jesus-1.jpg" alt="Terço Flores de Jesus" loading="lazy">
-          <div class="example-zoom">🔍</div>
-          <div class="example-info">
-            <h4>Terço Flores de Jesus</h4>
-            <span class="example-tag">simples · R$ 19,90</span>
-          </div>
-        </div>
-        <div class="example-card" data-images="assets/images/sao-miguel-1.jpg,assets/images/sao-miguel-2.jpg,assets/images/sao-miguel-3.jpg" data-name="Terço de São Miguel">
-          <img src="assets/images/sao-miguel-1.jpg" alt="Terço de São Miguel" loading="lazy">
-          <div class="example-zoom">🔍</div>
-          <div class="example-info">
-            <h4>Terço de São Miguel</h4>
-            <span class="example-tag">simples · R$ 19,90</span>
-          </div>
-        </div>
-        <div class="example-card" data-images="assets/images/sagrada-familia-1.jpg,assets/images/sagrada-familia-2.jpg,assets/images/sagrada-familia-3.jpg" data-name="Terço Sagrada Família">
-          <img src="assets/images/sagrada-familia-1.jpg" alt="Terço Sagrada Família" loading="lazy">
-          <div class="example-zoom">🔍</div>
-          <div class="example-info">
-            <h4>Terço Sagrada Família</h4>
-            <span class="example-tag">só pai nosso · R$ 29,90</span>
-          </div>
-        </div>
-        <div class="example-card" data-images="assets/images/sagrado-coracao-1.jpg,assets/images/sagrado-coracao-2.jpg,assets/images/sagrado-coracao-3.jpg" data-name="Terço Sagrado Coração de Jesus">
-          <img src="assets/images/sagrado-coracao-1.jpg" alt="Terço Sagrado Coração de Jesus" loading="lazy">
-          <div class="example-zoom">🔍</div>
-          <div class="example-info">
-            <h4>Terço Sagrado Coração de Jesus</h4>
-            <span class="example-tag">simples · R$ 19,90</span>
-          </div>
-        </div>
-        <div class="example-card" data-images="assets/images/nsra-gracas-1.jpg,assets/images/nsra-gracas-2.jpg,assets/images/nsra-gracas-3.jpg" data-name="Terço Nossa Senhora das Graças">
-          <img src="assets/images/nsra-gracas-1.jpg" alt="Terço Nossa Senhora das Graças" loading="lazy">
-          <div class="example-zoom">🔍</div>
-          <div class="example-info">
-            <h4>Terço Nossa Senhora das Graças</h4>
-            <span class="example-tag">simples · R$ 19,90</span>
-          </div>
-        </div>
-        <div class="example-card" data-images="assets/images/guadalupe-1.jpg,assets/images/guadalupe-2.jpg,assets/images/guadalupe-3.jpg" data-name="Terço Nossa Senhora de Guadalupe">
-          <img src="assets/images/guadalupe-1.jpg" alt="Terço Nossa Senhora de Guadalupe" loading="lazy">
-          <div class="example-zoom">🔍</div>
-          <div class="example-info">
-            <h4>Terço Nossa Senhora de Guadalupe</h4>
-            <span class="example-tag">só pai nosso · R$ 29,90</span>
-          </div>
-        </div>
   </div>
 
   <div class="custom-wrap">
@@ -544,6 +513,62 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div class="examples-intro">
+    <span class="eyebrow">Exemplos já feitos</span>
+    <h3>Inspire-se com o que já fizemos</h3>
+    <p>Esses terços abaixo não são vendidos como estão — são exemplos reais do que já fizemos, pra te ajudar a escolher a cor, o estilo e imaginar o resultado do seu.</p>
+  </div>
+  <div class="examples-grid">
+        <div class="example-card" data-images="assets/images/flores-de-jesus-1.jpg,assets/images/flores-de-jesus-2.jpg,assets/images/flores-de-jesus-3.jpg" data-name="Terço Flores de Jesus">
+          <img src="assets/images/flores-de-jesus-1.jpg" alt="Terço Flores de Jesus" loading="lazy">
+          <div class="example-zoom">🔍</div>
+          <div class="example-info">
+            <h4>Terço Flores de Jesus</h4>
+            <span class="example-tag">simples · R$ 19,90</span>
+          </div>
+        </div>
+        <div class="example-card" data-images="assets/images/sao-miguel-1.jpg,assets/images/sao-miguel-2.jpg,assets/images/sao-miguel-3.jpg" data-name="Terço de São Miguel">
+          <img src="assets/images/sao-miguel-1.jpg" alt="Terço de São Miguel" loading="lazy">
+          <div class="example-zoom">🔍</div>
+          <div class="example-info">
+            <h4>Terço de São Miguel</h4>
+            <span class="example-tag">simples · R$ 19,90</span>
+          </div>
+        </div>
+        <div class="example-card" data-images="assets/images/sagrada-familia-1.jpg,assets/images/sagrada-familia-2.jpg,assets/images/sagrada-familia-3.jpg" data-name="Terço Sagrada Família">
+          <img src="assets/images/sagrada-familia-1.jpg" alt="Terço Sagrada Família" loading="lazy">
+          <div class="example-zoom">🔍</div>
+          <div class="example-info">
+            <h4>Terço Sagrada Família</h4>
+            <span class="example-tag">só pai nosso · R$ 29,90</span>
+          </div>
+        </div>
+        <div class="example-card" data-images="assets/images/sagrado-coracao-1.jpg,assets/images/sagrado-coracao-2.jpg,assets/images/sagrado-coracao-3.jpg" data-name="Terço Sagrado Coração de Jesus">
+          <img src="assets/images/sagrado-coracao-1.jpg" alt="Terço Sagrado Coração de Jesus" loading="lazy">
+          <div class="example-zoom">🔍</div>
+          <div class="example-info">
+            <h4>Terço Sagrado Coração de Jesus</h4>
+            <span class="example-tag">simples · R$ 19,90</span>
+          </div>
+        </div>
+        <div class="example-card" data-images="assets/images/nsra-gracas-1.jpg,assets/images/nsra-gracas-2.jpg,assets/images/nsra-gracas-3.jpg" data-name="Terço Nossa Senhora das Graças">
+          <img src="assets/images/nsra-gracas-1.jpg" alt="Terço Nossa Senhora das Graças" loading="lazy">
+          <div class="example-zoom">🔍</div>
+          <div class="example-info">
+            <h4>Terço Nossa Senhora das Graças</h4>
+            <span class="example-tag">simples · R$ 19,90</span>
+          </div>
+        </div>
+        <div class="example-card" data-images="assets/images/guadalupe-1.jpg,assets/images/guadalupe-2.jpg,assets/images/guadalupe-3.jpg" data-name="Terço Nossa Senhora de Guadalupe">
+          <img src="assets/images/guadalupe-1.jpg" alt="Terço Nossa Senhora de Guadalupe" loading="lazy">
+          <div class="example-zoom">🔍</div>
+          <div class="example-info">
+            <h4>Terço Nossa Senhora de Guadalupe</h4>
+            <span class="example-tag">só pai nosso · R$ 29,90</span>
+          </div>
+        </div>
   </div>
 
   <div class="custom-cta">
