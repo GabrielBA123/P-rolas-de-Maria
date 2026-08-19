@@ -550,7 +550,10 @@ begin
   return v_row;
 end;
 $$;
-grant execute on function public.register_sale(uuid, integer, numeric, text) to authenticated;
+-- (grant already applied above, right after the first CREATE OR REPLACE
+-- of this same function signature — Postgres grants apply to the
+-- function's name+argument signature, not its body, so re-granting here
+-- would just be a harmless no-op; removed to avoid the duplicate.)
 
 -- ==========================================================================
 -- Done. Next: Authentication → Users → Add user, to create your first

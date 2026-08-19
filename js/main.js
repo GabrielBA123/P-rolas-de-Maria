@@ -147,6 +147,15 @@ document.querySelectorAll('#tipoChoice .choice-btn').forEach(function(btn){
   });
 });
 
+// Counts how many color swatches exist for a given Ave Maria size, so the
+// "disponíveis em N cores" hint always matches reality — adding or
+// removing a swatch in the HTML (like a new bead color) never requires
+// touching this number by hand again.
+function countColorOptions(tamanho){
+  var groupId = tamanho === '6mm' ? 'corChoice6mm' : 'corChoice8mm';
+  return document.querySelectorAll('#' + groupId + ' .swatch').length;
+}
+
 document.querySelectorAll('#tamanhoChoice .choice-btn').forEach(function(btn){
   btn.addEventListener('click', function(){
     document.querySelectorAll('#tamanhoChoice .choice-btn').forEach(function(b){b.classList.remove('selected');});
@@ -161,7 +170,8 @@ document.querySelectorAll('#tamanhoChoice .choice-btn').forEach(function(btn){
       customState.cor = 'Preto';
       document.querySelectorAll('#corChoice8mm .swatch').forEach(function(s,i){ s.classList.toggle('selected', i===0); });
     }
-    document.getElementById('corSub').textContent = 'Contas de ' + customState.tamanho + ' disponíveis em 3 cores';
+    document.getElementById('corSub').textContent =
+      'Contas de ' + customState.tamanho + ' disponíveis em ' + countColorOptions(customState.tamanho) + ' cores';
     updateCorGroupVisibility();
     updateNomePriceLabel();
     recalcPrice();
