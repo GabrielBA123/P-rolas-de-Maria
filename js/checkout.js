@@ -62,26 +62,37 @@ async function finalizarPedido(){
     });
 
     // one atomic call: creates the order + all its items server-side,
-    // recomputes the total from the items, and returns just {id, order_number}
-    const { data, error } = await sb.rpc('create_order', {
+    // recomputes the total from the items, and returns just {id, order_number}.
+    // Wrapped with a timeout so a hung connection doesn't leave the
+    // customer staring at "Enviando pedido..." forever.
+    const rpcPromise = sb.rpc('create_order', {
       p_customer_name: name,
       p_customer_phone: phone,
       p_customer_address: address,
       p_notes: notes,
       p_items: items
     });
+    const timeoutPromise = new Promise(function(_, reject){
+      setTimeout(function(){ reject(new Error('TIMEOUT')); }, 15000);
+    });
+    const { data, error } = await Promise.race([rpcPromise, timeoutPromise]);
 
     if(error) throw error;
     const created = Array.isArray(data) ? data[0] : data;
 
     // hand off to WhatsApp with the order number already in the message
     const orderNumber = '#' + String(created.order_number).padStart(6, '0');
-    sendWhatsAppMessage(orderNumber, name, total);
+    const whatsappUrl = buildWhatsAppUrl(orderNumber, name, total);
+    window.open(whatsappUrl, '_blank');
 
-    // 4) reset the cart + modal for a clean next visit
+    // show a confirmation screen instead of silently closing the modal —
+    // if the WhatsApp tab didn't open (common on iOS Safari) the customer
+    // still sees their order was saved and gets a button to retry it
+    showCheckoutSuccess(orderNumber, whatsappUrl);
+
+    // reset the cart for a clean next visit
     cart = [];
     renderCart();
-    closeCheckoutModal();
     document.getElementById('buyerName').value = '';
     document.getElementById('buyerPhone').value = '';
     document.getElementById('buyerAddress').value = '';
@@ -89,7 +100,9 @@ async function finalizarPedido(){
 
   } catch(err){
     console.error('Erro ao salvar pedido:', err);
-    if(!navigator.onLine){
+    if(err && err.message === 'TIMEOUT'){
+      errorEl.textContent = 'A conexão está demorando mais que o normal. Verifique sua internet e tente novamente — se o problema continuar, chame a gente no WhatsApp.';
+    } else if(!navigator.onLine){
       errorEl.textContent = 'Você está sem internet no momento. Verifique sua conexão e tente novamente.';
     } else if(err && err.message){
       // Supabase/Postgres errors come with a readable .message
@@ -106,15 +119,18 @@ async function finalizarPedido(){
   }
 }
 
-function sendWhatsAppMessage(orderNumber, name, total){
+function buildWhatsAppMessage(orderNumber, name, total){
   const lines = cart.map(function(i){
     return '- ' + i.qty + 'x ' + i.name + ' (' + formatBRL(i.price * i.qty) + ')';
   });
-  const msg = 'Olá! Fiz um pedido na Pérolas de Maria ' + orderNumber + ':\n\n' +
+  return 'Olá! Fiz um pedido na Pérolas de Maria ' + orderNumber + ':\n\n' +
     lines.join('\n') +
     '\n\nTotal: ' + formatBRL(total) +
     '\nNome: ' + name +
     '\n\nJá vou enviar o comprovante do Pix aqui.';
-  const url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
-  window.open(url, '_blank');
+}
+
+function buildWhatsAppUrl(orderNumber, name, total){
+  const msg = buildWhatsAppMessage(orderNumber, name, total);
+  return 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
 }

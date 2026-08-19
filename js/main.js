@@ -412,10 +412,32 @@ function openCheckout(){
   if(cart.length === 0) return;
   renderModalSummary();
   closeDrawer();
+  showCheckoutForm();
   checkoutOverlay.classList.add('show');
 }
-function closeCheckoutModal(){ checkoutOverlay.classList.remove('show'); }
+function closeCheckoutModal(){
+  checkoutOverlay.classList.remove('show');
+  // Reset to the form view after the close transition finishes, so a
+  // customer opening checkout again next time doesn't see last order's
+  // success screen for a split second.
+  setTimeout(showCheckoutForm, 300);
+}
 document.getElementById('closeCheckout').addEventListener('click', closeCheckoutModal);
+
+function showCheckoutForm(){
+  document.getElementById('checkoutFormView').style.display = '';
+  document.getElementById('checkoutSuccessView').style.display = 'none';
+}
+function showCheckoutSuccess(orderNumber, whatsappUrl){
+  document.getElementById('checkoutFormView').style.display = 'none';
+  var successView = document.getElementById('checkoutSuccessView');
+  successView.style.display = 'block';
+  document.getElementById('successOrderNumber').textContent = orderNumber;
+
+  var successBtn = document.getElementById('successWhatsBtn');
+  successBtn.onclick = function(){ window.open(whatsappUrl, '_blank'); };
+  document.getElementById('successCloseBtn').onclick = closeCheckoutModal;
+}
 
 function renderModalSummary(){
   var rows = cart.map(function(i){
@@ -487,6 +509,37 @@ document.addEventListener('keydown', function(e){
   if(e.key === 'Escape') closeLightbox();
 });
 } // end of lightbox guard
+
+// ---------- mobile nav toggle ----------
+(function(){
+  var toggle = document.getElementById('menuToggle');
+  var nav = document.getElementById('mainNav');
+  if(!toggle || !nav) return;
+
+  function closeNav(){
+    nav.classList.remove('open');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+  function openNav(){
+    nav.classList.add('open');
+    toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  toggle.addEventListener('click', function(){
+    if(nav.classList.contains('open')) closeNav(); else openNav();
+  });
+  // Close after picking a link (same-page anchors) so the menu doesn't
+  // stay open covering the section the visitor just navigated to.
+  nav.querySelectorAll('a').forEach(function(a){
+    a.addEventListener('click', closeNav);
+  });
+  // Close when tapping outside the open menu.
+  document.addEventListener('click', function(e){
+    if(!nav.classList.contains('open')) return;
+    if(nav.contains(e.target) || toggle.contains(e.target)) return;
+    closeNav();
+  });
+})();
 
 renderCart();
 
