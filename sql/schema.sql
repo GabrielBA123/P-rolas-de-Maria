@@ -150,13 +150,31 @@ security definer
 set search_path = public
 as $$
 declare
-  v_order_id     uuid;
-  v_order_number bigint;
-  v_total        numeric(10,2);
-  v_item         jsonb;
+  v_order_id       uuid;
+  v_order_number   bigint;
+  v_total          numeric(10,2);
+  v_item           jsonb;
+  v_recent_count   int;
 begin
   if p_items is null or jsonb_array_length(p_items) = 0 then
     raise exception 'O pedido precisa ter ao menos um item.';
+  end if;
+
+  -- --------------------------------------------------------------------
+  -- Basic anti-abuse rate limit: the public checkout form is reachable
+  -- by anyone (including scripts) since it must accept anon calls. This
+  -- caps how many orders the same phone number can create in a short
+  -- window, so a bot hammering create_order can't flood the orders
+  -- table. It's not perfect (a bot can rotate fake phone numbers), but
+  -- it stops the common case cheaply and costs a real customer nothing.
+  -- --------------------------------------------------------------------
+  select count(*) into v_recent_count
+    from public.orders
+    where customer_phone = p_customer_phone
+      and created_at > now() - interval '10 minutes';
+
+  if v_recent_count >= 3 then
+    raise exception 'Você já enviou pedidos recentemente. Aguarde alguns minutos antes de tentar novamente, ou fale com a gente pelo WhatsApp.';
   end if;
 
   select coalesce(sum((i->>'line_total')::numeric), 0)

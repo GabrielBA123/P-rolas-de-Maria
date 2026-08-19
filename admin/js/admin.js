@@ -51,6 +51,17 @@ async function checkSession(){
 function showLogin(){
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('app').classList.remove('ready');
+
+  // If the page loads (or reloads) while a lockout from a previous
+  // attempt is still active, reflect that immediately instead of
+  // letting the form look available until the next failed submit.
+  const remaining = getLockoutRemainingMs();
+  if(remaining > 0){
+    const mins = Math.ceil(remaining / 60000);
+    const msg = document.getElementById('loginMsg');
+    msg.textContent = 'Muitas tentativas incorretas. Tente novamente em ' + mins + ' minuto' + (mins > 1 ? 's' : '') + ', ou use "Esqueci minha senha".';
+    msg.className = 'form-msg error';
+  }
 }
 
 function showApp(session){
@@ -61,13 +72,62 @@ function showApp(session){
   subscribeRealtime();
 }
 
+// ---------------------------------------------------------------------
+// Login lockout: after repeated failed attempts, force a short cooldown
+// before allowing another try. This is a client-side speed bump only —
+// Supabase Auth already rate-limits sign-in attempts server-side, so
+// this doesn't replace that, it just gives the admin (or an attacker)
+// immediate, visible feedback instead of letting a script hammer the
+// button silently. Stored in sessionStorage so it resets if the tab
+// closes, but survives page reloads within the same session.
+// ---------------------------------------------------------------------
+const LOGIN_ATTEMPTS_KEY = 'pdm-admin-login-attempts';
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 2 * 60 * 1000; // 2 minutes
+
+function getLoginAttempts(){
+  try{
+    const raw = sessionStorage.getItem(LOGIN_ATTEMPTS_KEY);
+    return raw ? JSON.parse(raw) : { count: 0, lockedUntil: 0 };
+  }catch(e){ return { count: 0, lockedUntil: 0 }; }
+}
+function saveLoginAttempts(state){
+  try{ sessionStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(state)); }catch(e){}
+}
+function registerFailedLogin(){
+  const state = getLoginAttempts();
+  state.count += 1;
+  if(state.count >= MAX_ATTEMPTS){
+    state.lockedUntil = Date.now() + LOCKOUT_MS;
+    state.count = 0;
+  }
+  saveLoginAttempts(state);
+}
+function clearLoginAttempts(){
+  saveLoginAttempts({ count: 0, lockedUntil: 0 });
+}
+function getLockoutRemainingMs(){
+  const state = getLoginAttempts();
+  const remaining = state.lockedUntil - Date.now();
+  return remaining > 0 ? remaining : 0;
+}
+
 document.getElementById('loginForm').addEventListener('submit', async function(e){
   e.preventDefault();
   const btn = document.getElementById('loginBtn');
   const msg = document.getElementById('loginMsg');
-  btn.disabled = true;
   msg.textContent = '';
   msg.className = 'form-msg';
+
+  const remaining = getLockoutRemainingMs();
+  if(remaining > 0){
+    const mins = Math.ceil(remaining / 60000);
+    msg.textContent = 'Muitas tentativas incorretas. Tente novamente em ' + mins + ' minuto' + (mins > 1 ? 's' : '') + ', ou use "Esqueci minha senha".';
+    msg.className = 'form-msg error';
+    return;
+  }
+
+  btn.disabled = true;
 
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
@@ -75,11 +135,19 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
   if(error){
-    msg.textContent = 'E-mail ou senha incorretos.';
+    registerFailedLogin();
+    const stillLocked = getLockoutRemainingMs();
+    if(stillLocked > 0){
+      const mins = Math.ceil(stillLocked / 60000);
+      msg.textContent = 'Muitas tentativas incorretas. Tente novamente em ' + mins + ' minuto' + (mins > 1 ? 's' : '') + ', ou use "Esqueci minha senha".';
+    } else {
+      msg.textContent = 'E-mail ou senha incorretos.';
+    }
     msg.className = 'form-msg error';
     btn.disabled = false;
     return;
   }
+  clearLoginAttempts();
   showApp(data.session);
   btn.disabled = false;
 });

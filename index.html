@@ -61,7 +61,7 @@
     "@context": "https://schema.org",
     "@type": "Product",
     "name": "Chaveiro Nossa Senhora Aparecida",
-    "image": "https://perolas-de-maria.vercel.app/assets/images/chaveiro-aparecida.jpg",
+    "image": "https://perolas-de-maria.vercel.app/assets/images/chaveiro-aparecida-1.jpg",
     "brand": {
       "@type": "Brand",
       "name": "Pérolas de Maria"
@@ -292,10 +292,10 @@
     <h3>Pulseiras e chaveiro artesanais</h3>
   </div>
   <div class="catalog-grid">
-    <div class="catalog-card" data-product-id="chaveiro-aparecida" data-product-name="Chaveiro Nossa Senhora Aparecida" data-product-price="7.90" data-product-img="assets/images/chaveiro-aparecida.jpg">
+    <div class="catalog-card" data-product-id="chaveiro-aparecida" data-product-name="Chaveiro Nossa Senhora Aparecida" data-product-price="7.90" data-product-img="assets/images/chaveiro-aparecida-1.jpg">
       <a href="produto-chaveiro-aparecida.html" class="catalog-card-link">
         <span class="novidade-badge catalog-badge">✦ Novidade</span>
-        <div class="catalog-img gallery-contain"><img src="assets/images/chaveiro-aparecida.jpg" alt="Chaveiro Nossa Senhora Aparecida" loading="lazy"></div>
+        <div class="catalog-img gallery-contain"><img src="assets/images/chaveiro-aparecida-1.jpg" alt="Chaveiro Nossa Senhora Aparecida" loading="lazy"></div>
         <div class="catalog-info">
           <h4>Chaveiro Nossa Senhora Aparecida</h4>
           <p class="catalog-desc">Strass e detalhes dourados, acabamento delicado.</p>
@@ -408,6 +408,9 @@
           </button>
           <button type="button" class="swatch swatch-photo" data-cor="Azul Claro" data-preview="assets/images/ave-maria-8mm-azul-claro.jpg">
             <span class="swatch-dot swatch-photo-dot" style="background-image:url('assets/images/ave-maria-8mm-azul-claro.jpg');"></span><span>Azul Claro</span>
+          </button>
+          <button type="button" class="swatch swatch-photo" data-cor="Azul Escuro" data-preview="assets/images/ave-maria-8mm-azul-escuro.jpg">
+            <span class="swatch-dot swatch-photo-dot" style="background-image:url('assets/images/ave-maria-8mm-azul-escuro.jpg');"></span><span>Azul Escuro</span>
           </button>
           <button type="button" class="swatch swatch-photo" data-cor="Rosa Claro" data-preview="assets/images/ave-maria-8mm-rosa-claro.jpg">
             <span class="swatch-dot swatch-photo-dot" style="background-image:url('assets/images/ave-maria-8mm-rosa-claro.jpg');"></span><span>Rosa Claro</span>
@@ -650,6 +653,15 @@
     <div class="field">
       <label for="buyerNotes">Observações</label>
       <input type="text" id="buyerNotes" placeholder="Observações sobre o pedido">
+    </div>
+
+    <!-- Honeypot: invisible to real visitors, but simple bots that
+         auto-fill every form field on a page tend to fill this too.
+         If it comes back non-empty, finalizarPedido() silently drops
+         the submission instead of hitting Supabase. -->
+    <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+      <label for="buyerWebsite">Deixe em branco</label>
+      <input type="text" id="buyerWebsite" name="website" tabindex="-1" autocomplete="off">
     </div>
 
     <div class="modal-order-summary" id="modalSummary"></div>

@@ -156,6 +156,15 @@
       <input type="text" id="buyerNotes" placeholder="Observações sobre o pedido">
     </div>
 
+    <!-- Honeypot: invisible to real visitors, but simple bots that
+         auto-fill every form field on a page tend to fill this too.
+         If it comes back non-empty, finalizarPedido() silently drops
+         the submission instead of hitting Supabase. -->
+    <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+      <label for="buyerWebsite">Deixe em branco</label>
+      <input type="text" id="buyerWebsite" name="website" tabindex="-1" autocomplete="off">
+    </div>
+
     <div class="modal-order-summary" id="modalSummary"></div>
     <p id="checkoutError" style="display:none;color:#B23A3A;font-size:.85rem;margin:-8px 0 14px;font-family:'Jost',sans-serif;"></p>
 

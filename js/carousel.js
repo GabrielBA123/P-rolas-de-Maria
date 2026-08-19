@@ -94,11 +94,23 @@
     // ignore right-click / non-primary buttons
     if(e.button !== undefined && e.button !== 0) return;
     dragStart(e.clientX);
-    viewport.setPointerCapture(e.pointerId);
+    // Deliberately NOT using viewport.setPointerCapture() here: in testing,
+    // capturing the pointer on the viewport (a different element than the
+    // <a> the pointerdown/up actually target) made Chromium quietly skip
+    // synthesizing the click event on the slide's link afterwards — even
+    // for a plain click with zero movement. Without capture, a drag that
+    // leaves the viewport is still tracked correctly below via listeners
+    // on `window`, which fire regardless of what element the pointer is
+    // currently over.
   });
   viewport.addEventListener('pointermove', e => dragMove(e.clientX));
   viewport.addEventListener('pointerup', e => dragEnd(e.clientX));
   viewport.addEventListener('pointercancel', () => { dragging = false; track.style.transition = ''; render(); startAutoplay(); });
+  // Fallback so a drag that ends outside the viewport (finger/mouse moved
+  // past its edges before release) still resolves instead of getting
+  // stuck "dragging" forever.
+  window.addEventListener('pointermove', e => { if(dragging) dragMove(e.clientX); });
+  window.addEventListener('pointerup', e => { if(dragging) dragEnd(e.clientX); });
 
   // if the pointer moved enough to count as a drag, swallow the click so
   // the slide's <a href> doesn't navigate accidentally mid-swipe

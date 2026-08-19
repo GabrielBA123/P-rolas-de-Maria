@@ -11,12 +11,50 @@ const PIX_KEY = '32999976067';
 
 let submittingOrder = false; // guards against double-clicks / duplicate orders
 
+// Client-side throttle: this is just a cheap first line of defense to
+// discourage casual abuse (a person mashing the button, or a very basic
+// bot). It does NOT stop a determined attacker — anyone can bypass
+// client-side JS entirely — so the real protection is the rate limit
+// inside create_order() in sql/schema.sql, which runs on the server and
+// can't be skipped. Keep both: this one gives instant feedback without
+// a network round-trip, the DB one is the actual security boundary.
+const ORDER_TIMES_KEY = 'pdm-order-times';
+function getRecentOrderTimes(){
+  try{
+    const raw = sessionStorage.getItem(ORDER_TIMES_KEY);
+    const times = raw ? JSON.parse(raw) : [];
+    const cutoff = Date.now() - 10 * 60 * 1000; // 10 minutes
+    return times.filter(function(t){ return t > cutoff; });
+  }catch(e){ return []; }
+}
+function recordOrderTime(){
+  try{
+    const times = getRecentOrderTimes();
+    times.push(Date.now());
+    sessionStorage.setItem(ORDER_TIMES_KEY, JSON.stringify(times));
+  }catch(e){ /* sessionStorage unavailable — skip, DB rate limit still applies */ }
+}
+
 async function finalizarPedido(){
   if(submittingOrder) return; // already in flight — ignore extra clicks
   if(cart.length === 0) return;
 
   const errorEl = document.getElementById('checkoutError');
   errorEl.style.display = 'none';
+
+  // Honeypot: real visitors never see or fill this field (see the CSS in
+  // the HTML). If it's filled, a bot's autofill did it — pretend the
+  // submission worked (don't tip the bot off) but never touch Supabase.
+  const honeypot = document.getElementById('buyerWebsite');
+  if(honeypot && honeypot.value.trim() !== ''){
+    return;
+  }
+
+  if(getRecentOrderTimes().length >= 3){
+    errorEl.textContent = 'Você já enviou pedidos recentemente. Aguarde alguns minutos antes de tentar novamente, ou fale com a gente pelo WhatsApp.';
+    errorEl.style.display = 'block';
+    return;
+  }
 
   // If js/supabase-client.js still has the placeholder URL/key, `sb` is
   // null on purpose (see that file) — fail with a clear, honest message
@@ -79,6 +117,7 @@ async function finalizarPedido(){
 
     if(error) throw error;
     const created = Array.isArray(data) ? data[0] : data;
+    recordOrderTime();
 
     // hand off to WhatsApp with the order number already in the message
     const orderNumber = '#' + String(created.order_number).padStart(6, '0');
@@ -104,6 +143,10 @@ async function finalizarPedido(){
       errorEl.textContent = 'A conexão está demorando mais que o normal. Verifique sua internet e tente novamente — se o problema continuar, chame a gente no WhatsApp.';
     } else if(!navigator.onLine){
       errorEl.textContent = 'Você está sem internet no momento. Verifique sua conexão e tente novamente.';
+    } else if(err && err.message && err.message.indexOf('Você já enviou pedidos') === 0){
+      // Server-side rate limit from create_order() — already a complete,
+      // friendly sentence, so show it as-is instead of prefixing it.
+      errorEl.textContent = err.message;
     } else if(err && err.message){
       // Supabase/Postgres errors come with a readable .message
       // (e.g. our own "O pedido precisa ter ao menos um item.")
