@@ -1,0 +1,16 @@
+name: Manter Supabase ativo
+
+on:
+  schedule:
+    - cron: '0 12 */3 * *'   # a cada 3 dias, ao meio-dia (UTC)
+  workflow_dispatch:          # permite rodar na mão pela aba Actions
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consulta leve no banco
+        run: |
+          curl -fsS \
+            -H "apikey: sb_publishable_jzaLV-9q_ANf4bftlPOMtg_471J_g9g" \
+            "https://ldjubhvkkrxbpgrcdnid.supabase.co/rest/v1/orders?select=id&limit=1"
