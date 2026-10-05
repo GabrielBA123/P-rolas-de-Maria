@@ -355,6 +355,7 @@ async function openDetail(orderId){
       if(d.estilo) parts.push('Pai Nosso ' + d.estilo);
       if(d.nomePersonalizado) parts.push('nome: "' + d.nomePersonalizado + '"');
       if(d.entremeio) parts.push('entremeio: ' + d.entremeio);
+      if(d.cupom) parts.push('cupom ' + d.cupom + (d.preco_original ? ' (de ' + formatBRL(d.preco_original) + ')' : ''));
       detailsLine = '<div class="meta">' + escapeHtml(parts.join(' · ')) + '</div>';
     }
     return '<div class="item-line-wrap">' +
@@ -388,6 +389,9 @@ async function openDetail(orderId){
     '<div class="detail-section">' +
       '<h3>Itens do pedido</h3>' +
       itemsHtml +
+      (Number(order.discount) > 0
+        ? '<div class="detail-row" style="margin-top:10px;"><strong>Cupom</strong><span>' + escapeHtml(order.coupon_code || '') + ' (– ' + formatBRL(order.discount) + ')</span></div>'
+        : '') +
       '<div class="detail-row" style="margin-top:10px;"><strong>Total</strong><span>' + formatBRL(order.total) + '</span></div>' +
       '<div class="detail-row"><strong>Pagamento</strong><span>' + escapeHtml(order.payment_method) + '</span></div>' +
     '</div>' +

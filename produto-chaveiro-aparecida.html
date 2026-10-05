@@ -160,6 +160,15 @@
       <input type="text" id="buyerWebsite" name="website" tabindex="-1" autocomplete="off">
     </div>
 
+    <div class="coupon-box" id="couponBox">
+      <label for="couponInput">Cupom de desconto</label>
+      <div class="coupon-row">
+        <input type="text" id="couponInput" placeholder="Digite seu cupom" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="30">
+        <button type="button" class="coupon-btn" id="couponApplyBtn" onclick="applyCoupon()">Aplicar</button>
+      </div>
+      <p class="coupon-msg" id="couponMsg" style="display:none;"></p>
+    </div>
+
     <div class="modal-order-summary" id="modalSummary"></div>
     <p id="checkoutError" style="display:none;color:#B23A3A;font-size:.85rem;margin:-8px 0 14px;font-family:'Jost',sans-serif;"></p>
 

@@ -766,3 +766,24 @@
     .about-grid{grid-template-columns:1fr;}
     .footer-top{grid-template-columns:1fr;}
   }
+
+  /* ---------- cupom de desconto (checkout) ---------- */
+  .coupon-box{margin:6px 0 4px;}
+  .coupon-box label{font-family:'Jost',sans-serif;font-size:.78rem;color:var(--ink-soft);letter-spacing:.03em;}
+  .coupon-row{display:flex;gap:8px;margin-top:6px;}
+  .coupon-row input{
+    flex:1;min-width:0;margin-top:0;text-transform:uppercase;letter-spacing:.06em;
+    font-family:'Jost',sans-serif;font-size:.92rem;
+  }
+  .coupon-row input:disabled{opacity:.75;font-weight:600;}
+  .coupon-btn{
+    flex-shrink:0;background:none;border:1.5px solid var(--gold);color:var(--gold);
+    border-radius:999px;padding:0 20px;font-family:'Jost',sans-serif;font-size:.85rem;
+    font-weight:600;letter-spacing:.03em;cursor:pointer;transition:.2s;
+  }
+  .coupon-btn:hover{background:var(--gold);color:#fff;}
+  .coupon-msg{margin:8px 2px 0;font-family:'Jost',sans-serif;font-size:.84rem;line-height:1.45;}
+  .coupon-msg.ok{color:#2E7D4F;}
+  .coupon-msg.error{color:#B23A3A;}
+  .modal-order-summary .old{text-decoration:line-through;opacity:.55;margin-right:8px;}
+  .modal-order-summary .coupon-line{color:#2E7D4F;font-weight:600;}

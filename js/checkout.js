@@ -86,11 +86,16 @@ async function finalizarPedido(){
   whatsBtn.textContent = 'Enviando pedido...';
 
   try{
-    const total = cartTotal();
+    const expectedTotal = cartTotalWithCoupon();
+    const couponCode = appliedCoupon; // null se não houver cupom aplicado
 
-    // build the items payload the create_order() RPC expects
+    // build the items payload the create_order() RPC expects.
+    // Note: unit_price is always the NORMAL price — if a coupon was
+    // applied, the server swaps in the promo price itself (the browser
+    // can't set a coupon price on its own).
     const items = cart.map(function(i){
       return {
+        product_id: i.id,
         product_name: i.name,
         quantity: i.qty,
         unit_price: i.price,
@@ -108,7 +113,8 @@ async function finalizarPedido(){
       p_customer_phone: phone,
       p_customer_address: address,
       p_notes: notes,
-      p_items: items
+      p_items: items,
+      p_coupon: couponCode
     });
     const timeoutPromise = new Promise(function(_, reject){
       setTimeout(function(){ reject(new Error('TIMEOUT')); }, 15000);
@@ -121,7 +127,11 @@ async function finalizarPedido(){
 
     // hand off to WhatsApp with the order number already in the message
     const orderNumber = '#' + String(created.order_number).padStart(6, '0');
-    const whatsappUrl = buildWhatsAppUrl(orderNumber, name, total);
+    // the server's total/discount are the real ones — prefer them over
+    // the browser's own preview if they ever differ
+    const finalTotal = (created.total != null) ? Number(created.total) : expectedTotal;
+    const finalDiscount = (created.discount != null) ? Number(created.discount) : cartDiscount();
+    const whatsappUrl = buildWhatsAppUrl(orderNumber, name, finalTotal, finalDiscount, couponCode);
     window.open(whatsappUrl, '_blank');
 
     // show a confirmation screen instead of silently closing the modal —
@@ -129,8 +139,9 @@ async function finalizarPedido(){
     // still sees their order was saved and gets a button to retry it
     showCheckoutSuccess(orderNumber, whatsappUrl);
 
-    // reset the cart for a clean next visit
+    // reset the cart (and coupon) for a clean next visit
     cart = [];
+    removeCoupon();
     renderCart();
     document.getElementById('buyerName').value = '';
     document.getElementById('buyerPhone').value = '';
@@ -143,6 +154,11 @@ async function finalizarPedido(){
       errorEl.textContent = 'A conexão está demorando mais que o normal. Verifique sua internet e tente novamente — se o problema continuar, chame a gente no WhatsApp.';
     } else if(!navigator.onLine){
       errorEl.textContent = 'Você está sem internet no momento. Verifique sua conexão e tente novamente.';
+    } else if(err && err.message && (err.message.indexOf('Cupom') === 0 || err.message.indexOf('Este cupom') === 0)){
+      // Coupon rejected by the server (expired, turned off, not valid for
+      // these products) — the customer can tap "Remover" and order at the
+      // normal price.
+      errorEl.textContent = err.message + ' Toque em "Remover" no campo de cupom para continuar sem desconto.';
     } else if(err && err.message && err.message.indexOf('Você já enviou pedidos') === 0){
       // Server-side rate limit from create_order() — already a complete,
       // friendly sentence, so show it as-is instead of prefixing it.
@@ -162,18 +178,22 @@ async function finalizarPedido(){
   }
 }
 
-function buildWhatsAppMessage(orderNumber, name, total){
+function buildWhatsAppMessage(orderNumber, name, total, discount, couponCode){
   const lines = cart.map(function(i){
-    return '- ' + i.qty + 'x ' + i.name + ' (' + formatBRL(i.price * i.qty) + ')';
+    return '- ' + i.qty + 'x ' + i.name + ' (' + formatBRL(couponUnitPrice(i) * i.qty) + ')';
   });
+  const couponLine = (couponCode && discount > 0)
+    ? '\nCupom ' + couponCode + ': -' + formatBRL(discount)
+    : '';
   return 'Olá! Fiz um pedido na Pérolas de Maria ' + orderNumber + ':\n\n' +
     lines.join('\n') +
+    couponLine +
     '\n\nTotal: ' + formatBRL(total) +
     '\nNome: ' + name +
     '\n\nJá vou enviar o comprovante do Pix aqui.';
 }
 
-function buildWhatsAppUrl(orderNumber, name, total){
-  const msg = buildWhatsAppMessage(orderNumber, name, total);
+function buildWhatsAppUrl(orderNumber, name, total, discount, couponCode){
+  const msg = buildWhatsAppMessage(orderNumber, name, total, discount, couponCode);
   return 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
 }

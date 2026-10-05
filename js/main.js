@@ -372,6 +372,101 @@ function cartTotal(){
   return cart.reduce(function(sum,i){ return sum + i.price * i.qty; }, 0);
 }
 
+// ---------- cupons de desconto (aplicados na finalização do pedido) ----------
+// ATENÇÃO: esta tabela serve só para MOSTRAR os preços na tela antes de
+// finalizar. O desconto de verdade é calculado no servidor (tabelas
+// `coupons` e `coupon_prices` no Supabase, veja sql/cupons.sql) — o site
+// manda apenas o código do cupom. Se mudar um preço de cupom, mude nos
+// dois lugares.
+var COUPONS = {
+  'APARECIDA': {
+    label: 'Nossa Senhora Aparecida',
+    prices: {
+      'terco-aparecida': 32.90,
+      'terco-corrente-aparecida': 9.90,
+      'santinha-aparecida': 6.00,
+      'chaveiro-aparecida': 6.00
+    }
+  }
+};
+var appliedCoupon = null; // código do cupom aplicado (ex.: 'APARECIDA') ou null
+
+function roundMoney(v){ return Math.round(v * 100) / 100; }
+
+// preço unitário do item considerando o cupom aplicado (nunca maior que o normal)
+function couponUnitPrice(item){
+  if(!appliedCoupon || !COUPONS[appliedCoupon]) return item.price;
+  var promo = COUPONS[appliedCoupon].prices[item.id];
+  return (typeof promo === 'number' && promo < item.price) ? promo : item.price;
+}
+
+function cartTotalWithCoupon(){
+  return roundMoney(cart.reduce(function(sum,i){ return sum + couponUnitPrice(i) * i.qty; }, 0));
+}
+
+function cartDiscount(){
+  return roundMoney(cartTotal() - cartTotalWithCoupon());
+}
+
+// o cupom só vale se ao menos um item do carrinho participa dele
+function couponAppliesToCart(code){
+  var c = COUPONS[code];
+  if(!c) return false;
+  return cart.some(function(i){
+    return typeof c.prices[i.id] === 'number' && c.prices[i.id] < i.price;
+  });
+}
+
+function setCouponMsg(text, kind){
+  var el = document.getElementById('couponMsg');
+  if(!el) return;
+  if(!text){ el.style.display = 'none'; el.textContent = ''; return; }
+  el.textContent = text;
+  el.className = 'coupon-msg ' + kind;
+  el.style.display = 'block';
+}
+
+function applyCoupon(){
+  if(appliedCoupon){ removeCoupon(); return; } // o botão vira "Remover" depois de aplicado
+
+  var input = document.getElementById('couponInput');
+  var code = input.value.trim().toUpperCase();
+  if(!code){ setCouponMsg('Digite o código do cupom.', 'error'); return; }
+  if(!COUPONS[code]){ setCouponMsg('Cupom inválido.', 'error'); return; }
+  if(!couponAppliesToCart(code)){
+    setCouponMsg('Este cupom vale só para produtos de ' + COUPONS[code].label + ', e nenhum item do seu carrinho participa.', 'error');
+    return;
+  }
+
+  appliedCoupon = code;
+  input.value = code;
+  input.disabled = true;
+  document.getElementById('couponApplyBtn').textContent = 'Remover';
+  renderModalSummary();
+  setCouponMsg('Cupom ' + code + ' aplicado! Você economiza ' + formatBRL(cartDiscount()) + '.', 'ok');
+}
+
+function removeCoupon(){
+  appliedCoupon = null;
+  var input = document.getElementById('couponInput');
+  if(input){ input.disabled = false; input.value = ''; }
+  var btn = document.getElementById('couponApplyBtn');
+  if(btn) btn.textContent = 'Aplicar';
+  setCouponMsg('', '');
+  renderModalSummary();
+}
+
+// chamado ao abrir o checkout: se o carrinho mudou e o cupom não vale mais, remove
+function refreshCouponUI(){
+  if(!appliedCoupon) return;
+  if(!couponAppliesToCart(appliedCoupon)){
+    removeCoupon();
+    setCouponMsg('O cupom foi removido porque nenhum item do carrinho participa dele.', 'error');
+  } else {
+    setCouponMsg('Cupom ' + appliedCoupon + ' aplicado! Você economiza ' + formatBRL(cartDiscount()) + '.', 'ok');
+  }
+}
+
 function renderCart(){
   var count = cart.reduce(function(s,i){return s+i.qty;},0);
   document.getElementById('cartCount').textContent = count;
@@ -420,6 +515,7 @@ overlay.addEventListener('click', function(){ closeDrawer(); closeCheckoutModal(
 var checkoutOverlay = document.getElementById('checkoutOverlay');
 function openCheckout(){
   if(cart.length === 0) return;
+  refreshCouponUI();
   renderModalSummary();
   closeDrawer();
   showCheckoutForm();
@@ -451,10 +547,20 @@ function showCheckoutSuccess(orderNumber, whatsappUrl){
 
 function renderModalSummary(){
   var rows = cart.map(function(i){
-    return '<div class="row"><span>' + i.qty + '× ' + i.name + '</span><span>' + formatBRL(i.price*i.qty) + '</span></div>';
+    var unit = couponUnitPrice(i);
+    var line = unit < i.price
+      ? '<span class="old">' + formatBRL(i.price*i.qty) + '</span>' + formatBRL(unit*i.qty)
+      : formatBRL(i.price*i.qty);
+    return '<div class="row"><span>' + i.qty + '× ' + i.name + '</span><span>' + line + '</span></div>';
   }).join('');
-  document.getElementById('modalSummary').innerHTML = rows +
-    '<div class="total"><span>Total</span><span>' + formatBRL(cartTotal()) + '</span></div>';
+
+  var discount = cartDiscount();
+  var couponRow = (appliedCoupon && discount > 0)
+    ? '<div class="row coupon-line"><span>Cupom ' + appliedCoupon + '</span><span>– ' + formatBRL(discount) + '</span></div>'
+    : '';
+
+  document.getElementById('modalSummary').innerHTML = rows + couponRow +
+    '<div class="total"><span>Total</span><span>' + formatBRL(cartTotalWithCoupon()) + '</span></div>';
 }
 
 function copyPix(){
