@@ -61,7 +61,8 @@ insert into public.coupon_prices (coupon_code, product_id, promo_price) values
   ('APARECIDA', 'terco-aparecida',          32.90),  -- Terço Nossa Senhora Aparecida (de 39,90)
   ('APARECIDA', 'terco-corrente-aparecida',  9.90),  -- Terço de Corrente (de 19,90)
   ('APARECIDA', 'santinha-aparecida',        6.00),  -- Santinha (de 7,90)
-  ('APARECIDA', 'chaveiro-aparecida',        6.00)   -- Chaveiro (de 7,90)
+  ('APARECIDA', 'chaveiro-aparecida',        6.00),  -- Chaveiro (de 7,90)
+  ('APARECIDA', 'imagem-aparecida',         14.90)   -- Imagem de N.S. Aparecida 15 cm (de 19,90)
 on conflict (coupon_code, product_id) do update set promo_price = excluded.promo_price;
 
 -- --------------------------------------------------------------------------

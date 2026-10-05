@@ -23,8 +23,50 @@ document.querySelectorAll('.bead-divider').forEach(function(el){
   }
 });
 
-// ---------- cart state (in-memory — lives only for this page visit) ----------
-var cart = [];
+// ---------- cart state ----------
+// Cada produto tem a sua própria página (produto-*.html). Antes o carrinho
+// vivia só na memória da página e zerava ao abrir um produto. Agora ele é
+// guardado no localStorage e recarregado em qualquer página do site. Expira
+// em 3 dias. O servidor continua validando tudo no pedido.
+var CART_STORAGE_KEY = 'pdm-cart-v1';
+var CART_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
+
+function loadCart(){
+  try{
+    var raw = localStorage.getItem(CART_STORAGE_KEY);
+    if(!raw) return [];
+    var data = JSON.parse(raw);
+    if(!data || !Array.isArray(data.items) || (Date.now() - data.savedAt) > CART_MAX_AGE_MS) return [];
+
+    // só aceita itens com o formato esperado (protege contra dado velho/corrompido)
+    var items = data.items.filter(function(i){
+      return i && typeof i.id === 'string' && typeof i.name === 'string' && i.name.indexOf('<') === -1
+        && typeof i.img === 'string' && i.img.indexOf('assets/') === 0
+        && typeof i.price === 'number' && isFinite(i.price) && i.price >= 0
+        && typeof i.qty === 'number' && i.qty >= 1 && i.qty <= 50 && Math.floor(i.qty) === i.qty;
+    });
+
+    // se a página atual tem o produto, usa o nome/preço atuais (evita preço velho no carrinho)
+    items.forEach(function(i){
+      var el = document.querySelector('[data-product-id="' + i.id + '"][data-product-price]');
+      if(el){
+        var price = parseFloat(el.dataset.productPrice);
+        if(isFinite(price)) i.price = price;
+        if(el.dataset.productName) i.name = el.dataset.productName;
+      }
+    });
+    return items;
+  }catch(e){ return []; }
+}
+
+function saveCart(){
+  try{
+    if(cart.length === 0){ localStorage.removeItem(CART_STORAGE_KEY); }
+    else{ localStorage.setItem(CART_STORAGE_KEY, JSON.stringify({ savedAt: Date.now(), items: cart })); }
+  }catch(e){ /* localStorage indisponível (ex.: aba anônima) — segue só em memória */ }
+}
+
+var cart = loadCart();
 
 function formatBRL(v){
   return 'R$ ' + v.toFixed(2).replace('.', ',');
@@ -385,7 +427,8 @@ var COUPONS = {
       'terco-aparecida': 32.90,
       'terco-corrente-aparecida': 9.90,
       'santinha-aparecida': 6.00,
-      'chaveiro-aparecida': 6.00
+      'chaveiro-aparecida': 6.00,
+      'imagem-aparecida': 14.90
     }
   }
 };
@@ -468,6 +511,7 @@ function refreshCouponUI(){
 }
 
 function renderCart(){
+  saveCart();
   var count = cart.reduce(function(s,i){return s+i.qty;},0);
   document.getElementById('cartCount').textContent = count;
 
