@@ -1,0 +1,3 @@
+Estes arquivos são o HISTÓRICO das migrações que já foram aplicadas no seu
+Supabase, uma de cada vez. NÃO rode nenhum deles de novo.
+O estado final de tudo está em ../schema.sql (igual a ../schema-completo.sql).

@@ -11,17 +11,12 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://perolas-de-maria.vercel.app/produto-pulseira-sao-bento-branco.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://perolas-de-maria.vercel.app/produto-pulseira-sao-bento.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://perolas-de-maria.vercel.app/produto-terco-infantil-rosa.html</loc>
+    <loc>https://perolas-de-maria.vercel.app/produto-terco-infantil.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -37,6 +32,21 @@
   </url>
   <url>
     <loc>https://perolas-de-maria.vercel.app/produto-imagem-aparecida.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://perolas-de-maria.vercel.app/produto-terco-pulso.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://perolas-de-maria.vercel.app/produto-terco-emborrachado.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://perolas-de-maria.vercel.app/produto-terco-madeira.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

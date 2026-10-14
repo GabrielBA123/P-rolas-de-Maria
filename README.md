@@ -115,7 +115,20 @@ cadastro público, só você cria os logins manualmente:
 2. Clique em **Add user → Create new user**.
 3. Preencha seu e-mail e uma senha. Marque **Auto Confirm User** (assim
    você não precisa confirmar por e-mail) e clique em **Create user**.
-4. Pronto — entre em `seusite.vercel.app/admin` com esse e-mail e senha.
+4. **Torne esse usuário administrador:** no **SQL Editor** (query nova),
+   rode o comando abaixo trocando pelo seu e-mail:
+
+   ```sql
+   insert into private.admin_users (user_id)
+   select id from auth.users where email = 'seu-email@exemplo.com'
+   on conflict do nothing;
+   ```
+
+   *(Se você rodou o `schema.sql` DEPOIS de criar o usuário, o primeiro
+   usuário já vira admin sozinho e este passo não é necessário.)*
+5. Pronto — entre em `seusite.vercel.app/admin` com esse e-mail e senha.
+6. No Supabase, em **Authentication → Sign In / Providers**, desligue
+   **Allow new users to sign up** — assim ninguém além de você cria conta.
 
 ---
 
@@ -134,14 +147,12 @@ Duas formas:
 ## 7. Adicionar outro administrador no futuro
 
 Repita o passo 5 (**Authentication → Users → Add user**) com o e-mail da
-nova pessoa. Não precisa mexer em nenhum código — qualquer usuário
-criado no Supabase Auth consegue entrar em `/admin` automaticamente.
+nova pessoa e depois rode, no SQL Editor, o comando do passo 4 acima com o
+e-mail dela. Não precisa mexer em nenhum código. Ter conta no Supabase
+**não** basta: só quem está na lista `private.admin_users` enxerga os
+pedidos.
 
-*(Hoje o sistema trata "logado" e "administrador" como a mesma coisa —
-não existem níveis de permissão diferentes. Se um dia você quiser um
-funcionário com acesso mais limitado, por exemplo, dá pra evoluir isso
-depois com uma tabela de permissões — não implementei porque você não
-pediu e isso deixaria o projeto mais complexo do que precisa ser hoje.)*
+*(Todo administrador tem acesso total — não existem níveis de permissão diferentes. Se um dia você quiser um funcionário com acesso mais limitado, dá pra evoluir isso depois.)*
 
 ---
 

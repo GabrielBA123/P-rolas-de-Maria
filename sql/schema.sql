@@ -1,14 +1,74 @@
 -- ==========================================================================
--- Pérolas de Maria — Supabase schema
--- Run this whole file once in: Supabase Dashboard → SQL Editor → New query
+-- Pérolas de Maria — SQL COMPLETO (versão final, tudo em um arquivo)
+-- ==========================================================================
+-- Reúne: pedidos, estoque/calculadora, segurança (admin), cupons e o
+-- cupom APARECIDA. Substitui o schema.sql antigo + seguranca.sql +
+-- seguranca-parte2.sql + cupons.sql + cupom-imagem.sql.
+--
+-- Como usar: Supabase → SQL Editor → New query → colar tudo → Run.
+--   • Banco NOVO: rode e depois crie seu login em Authentication → Users.
+--     Em seguida torne-o admin com o comando que está no FIM deste arquivo.
+--   • Banco que JÁ está funcionando (o seu): pode rodar por cima sem medo.
+--     Não apaga pedidos nem dados; só garante que tudo está no estado final.
+--     Se o Supabase mostrar o aviso amarelo "destructive operations", é por
+--     causa dos "drop policy/trigger if exists" que recriam as regras.
 -- ==========================================================================
 
+begin;
+
 -- --------------------------------------------------------------------------
--- 1) ORDERS
+-- 1) QUEM É ADMIN (schema "private": não é exposto pela API do Supabase)
+--    As policies abaixo só liberam acesso a quem estiver nesta lista.
+-- --------------------------------------------------------------------------
+create schema if not exists private;
+revoke all on schema private from public, anon;
+grant usage on schema private to authenticated;
+
+create table if not exists private.admin_users (
+  user_id uuid primary key references auth.users(id) on delete cascade
+);
+alter table private.admin_users enable row level security;
+revoke all on table private.admin_users from public, anon, authenticated;
+
+drop policy if exists "ninguem acessa direto" on private.admin_users;
+create policy "ninguem acessa direto"
+  on private.admin_users for all to authenticated
+  using (false) with check (false);
+
+-- Só semeia a lista se ela estiver VAZIA (primeira vez). Em banco que já
+-- tem admin, nada muda — contas criadas depois NÃO viram admin sozinhas.
+do $$
+begin
+  if not exists (select 1 from private.admin_users) then
+    insert into private.admin_users (user_id) select id from auth.users;
+    if not exists (select 1 from private.admin_users) then
+      raise notice 'Ainda não existe nenhum usuário. Crie o login em Authentication > Users e depois rode o comando do FIM deste arquivo para torná-lo admin.';
+    end if;
+  end if;
+end $$;
+
+create or replace function private.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from private.admin_users
+    where user_id = (select auth.uid())
+  );
+$$;
+
+revoke all on function private.is_admin() from public, anon;
+grant execute on function private.is_admin() to authenticated;
+
+-- --------------------------------------------------------------------------
+-- 2) PEDIDOS
 -- --------------------------------------------------------------------------
 create table if not exists public.orders (
   id               uuid primary key default gen_random_uuid(),
-  order_number     bigint generated always as identity, -- becomes #000001, #000002...
+  order_number     bigint generated always as identity,   -- #000001, #000002...
   customer_name    text not null check (char_length(trim(customer_name)) > 0),
   customer_phone   text not null check (char_length(trim(customer_phone)) > 0),
   customer_address text not null check (char_length(trim(customer_address)) > 0),
@@ -25,13 +85,15 @@ create table if not exists public.orders (
   updated_at       timestamptz not null default now()
 );
 
+-- cupom usado e valor do desconto (bancos antigos ganham as colunas aqui)
+alter table public.orders
+  add column if not exists coupon_code text,
+  add column if not exists discount numeric(10,2) not null default 0 check (discount >= 0);
+
 create unique index if not exists orders_order_number_key on public.orders (order_number);
 create index if not exists orders_status_idx on public.orders (status);
 create index if not exists orders_created_at_idx on public.orders (created_at desc);
 
--- --------------------------------------------------------------------------
--- 2) ORDER ITEMS (one row per product inside an order)
--- --------------------------------------------------------------------------
 create table if not exists public.order_items (
   id           uuid primary key default gen_random_uuid(),
   order_id     uuid not null references public.orders(id) on delete cascade,
@@ -39,17 +101,13 @@ create table if not exists public.order_items (
   quantity     integer not null check (quantity > 0),
   unit_price   numeric(10,2) not null check (unit_price >= 0),
   line_total   numeric(10,2) not null check (line_total >= 0),
-  -- for personalized terços: { tipo, tipoLabel, cor, estilo, entremeio }
+  -- terços personalizados: { tipo, tipoLabel, cor, estilo, entremeio };
+  -- itens com cupom: { cupom, preco_original }
   details      jsonb,
   created_at   timestamptz not null default now()
 );
-
 create index if not exists order_items_order_id_idx on public.order_items (order_id);
 
--- --------------------------------------------------------------------------
--- 3) ORDER STATUS HISTORY (auto-filled by triggers — nobody writes here
---    directly, not even the create_order() function below)
--- --------------------------------------------------------------------------
 create table if not exists public.order_status_history (
   id         uuid primary key default gen_random_uuid(),
   order_id   uuid not null references public.orders(id) on delete cascade,
@@ -57,16 +115,15 @@ create table if not exists public.order_status_history (
   note       text,
   changed_at timestamptz not null default now()
 );
-
 create index if not exists order_status_history_order_id_idx on public.order_status_history (order_id);
 
 -- --------------------------------------------------------------------------
--- 4) updated_at auto-touch + status history triggers
+-- 3) FUNÇÕES DE TRIGGER (search_path fixo; ninguém chama por fora)
 -- --------------------------------------------------------------------------
-
 create or replace function public.touch_updated_at()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   new.updated_at = now();
@@ -74,17 +131,11 @@ begin
 end;
 $$;
 
-drop trigger if exists trg_orders_touch_updated_at on public.orders;
-create trigger trg_orders_touch_updated_at
-  before update on public.orders
-  for each row execute function public.touch_updated_at();
-
--- log "Pedido criado" the moment a new order is inserted
 create or replace function public.log_order_created()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 begin
   insert into public.order_status_history (order_id, status, note)
@@ -93,17 +144,11 @@ begin
 end;
 $$;
 
-drop trigger if exists trg_orders_log_created on public.orders;
-create trigger trg_orders_log_created
-  after insert on public.orders
-  for each row execute function public.log_order_created();
-
--- log every status change (fires when an admin updates orders.status)
 create or replace function public.log_status_change()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 begin
   if new.status is distinct from old.status then
@@ -114,175 +159,40 @@ begin
 end;
 $$;
 
+revoke all on function public.touch_updated_at()  from public, anon, authenticated;
+revoke all on function public.log_order_created() from public, anon, authenticated;
+revoke all on function public.log_status_change() from public, anon, authenticated;
+
+drop trigger if exists trg_orders_touch_updated_at on public.orders;
+create trigger trg_orders_touch_updated_at
+  before update on public.orders
+  for each row execute function public.touch_updated_at();
+
+drop trigger if exists trg_orders_log_created on public.orders;
+create trigger trg_orders_log_created
+  after insert on public.orders
+  for each row execute function public.log_order_created();
+
 drop trigger if exists trg_orders_log_status_change on public.orders;
 create trigger trg_orders_log_status_change
   after update on public.orders
   for each row execute function public.log_status_change();
 
 -- --------------------------------------------------------------------------
--- 5) create_order() — the ONLY way the public website can create an order.
---
---    Why an RPC function instead of letting the browser INSERT directly:
---    Postgres RLS would require granting the public "anon" role a SELECT
---    policy just so Supabase can return the newly created row (needed to
---    read back the order_number) — and that would mean opening up read
---    access to the orders table, which we don't want (anyone could then
---    read every customer's name/phone/address). Wrapping the whole
---    create-order step in a SECURITY DEFINER function sidesteps that: the
---    function runs with elevated rights internally, but only returns the
---    two harmless fields (id, order_number) to the caller. Because of
---    this, `orders` and `order_items` never need ANY grant for anon —
---    see the RLS policies in step 6.
---
---    It also recomputes the total from the items server-side, so a
---    tampered client can't submit a fake discounted total.
+-- 4) CALCULADORA DE PREÇO + ESTOQUE (só /admin)
 -- --------------------------------------------------------------------------
-create or replace function public.create_order(
-  p_customer_name    text,
-  p_customer_phone   text,
-  p_customer_address text,
-  p_notes            text,
-  p_items            jsonb  -- [{product_name, quantity, unit_price, line_total, details}, ...]
-)
-returns table(id uuid, order_number bigint)
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_order_id       uuid;
-  v_order_number   bigint;
-  v_total          numeric(10,2);
-  v_item           jsonb;
-  v_recent_count   int;
-begin
-  if p_items is null or jsonb_array_length(p_items) = 0 then
-    raise exception 'O pedido precisa ter ao menos um item.';
-  end if;
-
-  -- --------------------------------------------------------------------
-  -- Basic anti-abuse rate limit: the public checkout form is reachable
-  -- by anyone (including scripts) since it must accept anon calls. This
-  -- caps how many orders the same phone number can create in a short
-  -- window, so a bot hammering create_order can't flood the orders
-  -- table. It's not perfect (a bot can rotate fake phone numbers), but
-  -- it stops the common case cheaply and costs a real customer nothing.
-  -- --------------------------------------------------------------------
-  select count(*) into v_recent_count
-    from public.orders
-    where customer_phone = p_customer_phone
-      and created_at > now() - interval '10 minutes';
-
-  if v_recent_count >= 3 then
-    raise exception 'Você já enviou pedidos recentemente. Aguarde alguns minutos antes de tentar novamente, ou fale com a gente pelo WhatsApp.';
-  end if;
-
-  select coalesce(sum((i->>'line_total')::numeric), 0)
-    into v_total
-    from jsonb_array_elements(p_items) as i;
-
-  insert into public.orders
-    (customer_name, customer_phone, customer_address, notes, payment_method, subtotal, total, status)
-  values
-    (p_customer_name, p_customer_phone, p_customer_address, nullif(p_notes, ''), 'pix', v_total, v_total, 'aguardando_pagamento')
-  returning orders.id, orders.order_number into v_order_id, v_order_number;
-
-  for v_item in select * from jsonb_array_elements(p_items)
-  loop
-    insert into public.order_items (order_id, product_name, quantity, unit_price, line_total, details)
-    values (
-      v_order_id,
-      v_item->>'product_name',
-      (v_item->>'quantity')::int,
-      (v_item->>'unit_price')::numeric,
-      (v_item->>'line_total')::numeric,
-      v_item->'details'
-    );
-  end loop;
-
-  return query select v_order_id, v_order_number;
-end;
-$$;
-
--- only the public/anon role may call this function — admins use the
--- table policies below instead, they don't need this RPC.
-grant execute on function public.create_order(text, text, text, text, jsonb) to anon;
-
--- --------------------------------------------------------------------------
--- 6) Row Level Security
---    Nobody — not even the anon key — gets a direct SELECT/INSERT/UPDATE/
---    DELETE grant on these three tables. The public site creates orders
---    exclusively through create_order() above. Only an authenticated
---    admin (logged in on /admin) can read or manage them. This is the
---    REAL security boundary — the /admin login screen is just the UI.
--- --------------------------------------------------------------------------
-
-alter table public.orders enable row level security;
-alter table public.order_items enable row level security;
-alter table public.order_status_history enable row level security;
-
-drop policy if exists "admins can read orders" on public.orders;
-create policy "admins can read orders"
-  on public.orders for select
-  to authenticated
-  using (true);
-
-drop policy if exists "admins can update orders" on public.orders;
-create policy "admins can update orders"
-  on public.orders for update
-  to authenticated
-  using (true)
-  with check (true);
-
-drop policy if exists "admins can delete orders" on public.orders;
-create policy "admins can delete orders"
-  on public.orders for delete
-  to authenticated
-  using (true);
-
-drop policy if exists "admins can read order items" on public.order_items;
-create policy "admins can read order items"
-  on public.order_items for select
-  to authenticated
-  using (true);
-
-drop policy if exists "admins can read order history" on public.order_status_history;
-create policy "admins can read order history"
-  on public.order_status_history for select
-  to authenticated
-  using (true);
-
--- --------------------------------------------------------------------------
--- 7) Realtime — lets the admin dashboard show "🔔 Novo pedido recebido"
---    the moment an order is inserted, without refreshing the page.
--- --------------------------------------------------------------------------
-do $$
-begin
-  if not exists (
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime'
-      and schemaname = 'public'
-      and tablename = 'orders'
-  ) then
-    alter publication supabase_realtime add table public.orders;
-  end if;
-end $$;
-
--- --------------------------------------------------------------------------
--- 8) CALCULADORA DE PREÇO — internal tool, /admin only. Customers and the
---    public site never touch these tables, so there is no anon policy at
---    all here (default-deny — only logged-in admins can read or write).
--- --------------------------------------------------------------------------
-
--- one row per material, seeded below — edit the unit_cost values in the
--- admin UI, don't add/remove rows there (the app expects exactly these 6)
 create table if not exists public.price_materials (
-  id         uuid primary key default gen_random_uuid(),
-  key        text unique not null check (key in ('perolas','crucifixo','entremeio','fio','embalagem','outros')),
-  label      text not null,
-  unit_cost  numeric(10,4) not null default 0 check (unit_cost >= 0),
-  updated_at timestamptz not null default now()
+  id                   uuid primary key default gen_random_uuid(),
+  key                  text unique not null check (key in ('perolas','crucifixo','entremeio','fio','embalagem','outros')),
+  label                text not null,
+  unit_cost            numeric(10,4) not null default 0 check (unit_cost >= 0),
+  stock_quantity       numeric(10,2) not null default 0,
+  low_stock_threshold  numeric(10,2) not null default 10,
+  updated_at           timestamptz not null default now()
 );
+alter table public.price_materials
+  add column if not exists stock_quantity numeric(10,2) not null default 0,
+  add column if not exists low_stock_threshold numeric(10,2) not null default 10;
 
 insert into public.price_materials (key, label) values
   ('perolas',   'Pérolas'),
@@ -298,11 +208,6 @@ create trigger trg_price_materials_touch
   before update on public.price_materials
   for each row execute function public.touch_updated_at();
 
--- saved terço models: how many units of each material a given model uses,
--- plus the chosen profit margin. Cost/profit/final price are always
--- recalculated live in the browser from the current material costs above
--- — nothing pre-computed is stored, so editing a material cost instantly
--- updates every model's price.
 create table if not exists public.price_models (
   id             uuid primary key default gen_random_uuid(),
   name           text not null check (char_length(trim(name)) > 0),
@@ -312,43 +217,28 @@ create table if not exists public.price_models (
   qty_fio        numeric(10,2) not null default 0,
   qty_embalagem  numeric(10,2) not null default 0,
   qty_outros     numeric(10,2) not null default 0,
+  cost_perolas   numeric(10,4) not null default 0,
+  cost_crucifixo numeric(10,4) not null default 0,
+  cost_entremeio numeric(10,4) not null default 0,
+  cost_fio       numeric(10,4) not null default 0,
+  cost_embalagem numeric(10,4) not null default 0,
+  cost_outros    numeric(10,4) not null default 0,
   margin_percent numeric(6,2) not null default 50,
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
+alter table public.price_models
+  add column if not exists cost_perolas    numeric(10,4) not null default 0,
+  add column if not exists cost_crucifixo  numeric(10,4) not null default 0,
+  add column if not exists cost_entremeio  numeric(10,4) not null default 0,
+  add column if not exists cost_fio        numeric(10,4) not null default 0,
+  add column if not exists cost_embalagem  numeric(10,4) not null default 0,
+  add column if not exists cost_outros     numeric(10,4) not null default 0;
 
 drop trigger if exists trg_price_models_touch on public.price_models;
 create trigger trg_price_models_touch
   before update on public.price_models
   for each row execute function public.touch_updated_at();
-
-alter table public.price_materials enable row level security;
-alter table public.price_models enable row level security;
-
-drop policy if exists "admins manage price materials" on public.price_materials;
-create policy "admins manage price materials"
-  on public.price_materials for all
-  to authenticated
-  using (true) with check (true);
-
-drop policy if exists "admins manage price models" on public.price_models;
-create policy "admins manage price models"
-  on public.price_models for all
-  to authenticated
-  using (true) with check (true);
-
--- --------------------------------------------------------------------------
--- 9) ESTOQUE — integrated with the price calculator above.
---    price_materials gets stock tracking columns; purchases add to stock,
---    sales subtract from stock (using the quantities already registered
---    per terço model in price_models). Both go through RPC functions so
---    the stock update is atomic — no lost updates from two people (or two
---    tabs) editing stock at the same time.
--- --------------------------------------------------------------------------
-
-alter table public.price_materials
-  add column if not exists stock_quantity numeric(10,2) not null default 0,
-  add column if not exists low_stock_threshold numeric(10,2) not null default 10;
 
 create table if not exists public.stock_purchases (
   id            uuid primary key default gen_random_uuid(),
@@ -365,31 +255,183 @@ create table if not exists public.stock_sales (
   model_id    uuid not null references public.price_models(id) on delete cascade,
   quantity    integer not null check (quantity > 0),
   unit_price  numeric(10,2) not null check (unit_price >= 0),
-  unit_cost   numeric(10,2) not null check (unit_cost >= 0),  -- snapshot of cost at sale time
-  profit      numeric(10,2) not null,                          -- snapshot too — material costs may change later
+  unit_cost   numeric(10,2) not null check (unit_cost >= 0),
+  profit      numeric(10,2) not null,
   notes       text,
   sold_at     timestamptz not null default now()
 );
 create index if not exists stock_sales_model_id_idx on public.stock_sales (model_id);
 
-alter table public.stock_purchases enable row level security;
-alter table public.stock_sales enable row level security;
+-- --------------------------------------------------------------------------
+-- 5) CUPONS (preço promocional fixo por produto)
+-- --------------------------------------------------------------------------
+create table if not exists public.coupons (
+  code        text primary key check (code = upper(code) and code ~ '^[A-Z0-9_-]{3,30}$'),
+  active      boolean not null default true,
+  expires_at  timestamptz,
+  created_at  timestamptz not null default now()
+);
 
-drop policy if exists "admins manage stock purchases" on public.stock_purchases;
-create policy "admins manage stock purchases"
-  on public.stock_purchases for all
-  to authenticated
-  using (true) with check (true);
+create table if not exists public.coupon_prices (
+  coupon_code text not null references public.coupons(code) on delete cascade,
+  product_id  text not null,              -- mesmo id do site (data-product-id)
+  promo_price numeric(10,2) not null check (promo_price >= 0),
+  primary key (coupon_code, product_id)
+);
 
-drop policy if exists "admins manage stock sales" on public.stock_sales;
-create policy "admins manage stock sales"
-  on public.stock_sales for all
-  to authenticated
-  using (true) with check (true);
+-- --------------------------------------------------------------------------
+-- 6) FUNÇÕES DO SISTEMA
+-- --------------------------------------------------------------------------
 
--- register_purchase(): logs the purchase and atomically adds to stock.
--- Also updates the material's unit_cost to this purchase's price-per-unit,
--- so the calculator always reflects what you most recently paid.
+-- create_order(): a ÚNICA porta de entrada do checkout público. Valida
+-- tudo, aplica o cupom e calcula total/desconto NO SERVIDOR. Retorna o
+-- total e o desconto reais para o site usar na mensagem do WhatsApp.
+drop function if exists public.create_order(text, text, text, text, jsonb);
+
+create or replace function public.create_order(
+  p_customer_name    text,
+  p_customer_phone   text,
+  p_customer_address text,
+  p_notes            text,
+  p_items            jsonb,
+  p_coupon           text default null
+)
+returns table(id uuid, order_number bigint, total numeric, discount numeric)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_order_id     uuid;
+  v_order_number bigint;
+  v_subtotal     numeric(10,2) := 0;
+  v_total        numeric(10,2) := 0;
+  v_item         jsonb;
+  v_norm         jsonb := '[]'::jsonb;
+  v_qty          int;
+  v_price        numeric;
+  v_promo        numeric;
+  v_final        numeric;
+  v_code         text;
+  v_applied      int := 0;
+  v_recent_count int;
+begin
+  if p_items is null or jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
+    raise exception 'O pedido precisa ter ao menos um item.';
+  end if;
+
+  if jsonb_array_length(p_items) > 30 then
+    raise exception 'Pedido com itens demais. Fale com a gente pelo WhatsApp.';
+  end if;
+
+  if char_length(coalesce(p_customer_name, ''))    > 120
+     or char_length(coalesce(p_customer_phone, ''))   > 40
+     or char_length(coalesce(p_customer_address, '')) > 300
+     or char_length(coalesce(p_notes, ''))            > 500
+     or char_length(coalesce(p_coupon, ''))           > 30 then
+    raise exception 'Algum campo está longo demais.';
+  end if;
+
+  -- limite por telefone (anti-abuso do formulário público)
+  select count(*) into v_recent_count
+    from public.orders o
+    where o.customer_phone = p_customer_phone
+      and o.created_at > now() - interval '10 minutes';
+
+  if v_recent_count >= 3 then
+    raise exception 'Você já enviou pedidos recentemente. Aguarde alguns minutos antes de tentar novamente, ou fale com a gente pelo WhatsApp.';
+  end if;
+
+  -- cupom (se veio): precisa existir, estar ativo e não ter expirado
+  v_code := upper(trim(coalesce(p_coupon, '')));
+  if v_code <> '' then
+    if not exists (
+      select 1 from public.coupons c
+      where c.code = v_code
+        and c.active
+        and (c.expires_at is null or c.expires_at > now())
+    ) then
+      raise exception 'Cupom inválido ou expirado.';
+    end if;
+  end if;
+
+  -- valida cada item, aplica o preço do cupom e calcula tudo no servidor
+  for v_item in select * from jsonb_array_elements(p_items)
+  loop
+    v_qty   := (v_item->>'quantity')::int;
+    v_price := (v_item->>'unit_price')::numeric;
+
+    if v_qty is null or v_qty < 1 or v_qty > 50
+       or v_price is null or v_price < 0 or v_price > 5000
+       or coalesce(v_item->>'product_name', '') = ''
+       or char_length(v_item->>'product_name') > 200
+       or char_length(coalesce((v_item->'details')::text, '')) > 2000 then
+      raise exception 'Item inválido no pedido.';
+    end if;
+
+    v_promo := null;
+    if v_code <> '' then
+      select cp.promo_price into v_promo
+        from public.coupon_prices cp
+        where cp.coupon_code = v_code
+          and cp.product_id = (v_item->>'product_id');
+    end if;
+
+    -- o cupom nunca deixa o item mais caro do que o preço normal
+    v_final := least(v_promo, v_price);
+    if v_promo is not null and v_final < v_price then
+      v_applied := v_applied + 1;
+    end if;
+
+    v_subtotal := v_subtotal + round(v_qty * v_price, 2);
+    v_total    := v_total    + round(v_qty * v_final, 2);
+
+    v_norm := v_norm || jsonb_build_object(
+      'product_name', v_item->>'product_name',
+      'quantity',     v_qty,
+      'unit_price',   v_final,
+      'line_total',   round(v_qty * v_final, 2),
+      'details',      case
+                        when v_promo is not null and v_final < v_price
+                          then jsonb_build_object('cupom', v_code, 'preco_original', v_price)
+                        else v_item->'details'
+                      end
+    );
+  end loop;
+
+  if v_code <> '' and v_applied = 0 then
+    raise exception 'Este cupom não vale para os produtos do seu carrinho.';
+  end if;
+
+  insert into public.orders
+    (customer_name, customer_phone, customer_address, notes, payment_method,
+     subtotal, discount, total, coupon_code, status)
+  values
+    (p_customer_name, p_customer_phone, p_customer_address, nullif(p_notes, ''), 'pix',
+     v_subtotal, v_subtotal - v_total, v_total,
+     case when v_applied > 0 then v_code else null end,
+     'aguardando_pagamento')
+  returning orders.id, orders.order_number into v_order_id, v_order_number;
+
+  for v_item in select * from jsonb_array_elements(v_norm)
+  loop
+    insert into public.order_items (order_id, product_name, quantity, unit_price, line_total, details)
+    values (
+      v_order_id,
+      v_item->>'product_name',
+      (v_item->>'quantity')::int,
+      (v_item->>'unit_price')::numeric,
+      (v_item->>'line_total')::numeric,
+      case when jsonb_typeof(v_item->'details') = 'null' then null else v_item->'details' end
+    );
+  end loop;
+
+  return query select v_order_id, v_order_number, v_total, (v_subtotal - v_total);
+end;
+$$;
+
+-- register_purchase(): registra a compra e soma no estoque (SECURITY INVOKER:
+-- roda com os poderes de quem chama, então só admin consegue, via RLS).
 create or replace function public.register_purchase(
   p_material_id uuid,
   p_quantity    numeric,
@@ -398,12 +440,16 @@ create or replace function public.register_purchase(
 )
 returns public.stock_purchases
 language plpgsql
-security definer
-set search_path = public
+security invoker
+set search_path = ''
 as $$
 declare
   v_row public.stock_purchases;
 begin
+  if not (select private.is_admin()) then
+    raise exception 'Acesso negado.';
+  end if;
+
   insert into public.stock_purchases (material_id, quantity, total_cost, notes)
   values (p_material_id, p_quantity, p_total_cost, nullif(p_notes, ''))
   returning * into v_row;
@@ -416,10 +462,8 @@ begin
   return v_row;
 end;
 $$;
-grant execute on function public.register_purchase(uuid, numeric, numeric, text) to authenticated;
 
--- register_sale(): snapshots cost/profit for the given model + quantity,
--- logs the sale, and atomically subtracts the materials it used from stock.
+-- register_sale(): registra a venda de um modelo e baixa os materiais do estoque.
 create or replace function public.register_sale(
   p_model_id   uuid,
   p_quantity   integer,
@@ -428,97 +472,18 @@ create or replace function public.register_sale(
 )
 returns public.stock_sales
 language plpgsql
-security definer
-set search_path = public
+security invoker
+set search_path = ''
 as $$
 declare
   v_model     public.price_models;
   v_unit_cost numeric(10,2) := 0;
   v_row       public.stock_sales;
 begin
-  select * into v_model from public.price_models where id = p_model_id;
-  if not found then
-    raise exception 'Modelo de terço não encontrado.';
+  if not (select private.is_admin()) then
+    raise exception 'Acesso negado.';
   end if;
 
-  select coalesce(sum(pm.unit_cost * qty.amount), 0) into v_unit_cost
-  from (values
-    ('perolas',   v_model.qty_perolas),
-    ('crucifixo', v_model.qty_crucifixo),
-    ('entremeio', v_model.qty_entremeio),
-    ('fio',       v_model.qty_fio),
-    ('embalagem', v_model.qty_embalagem),
-    ('outros',    v_model.qty_outros)
-  ) as qty(key, amount)
-  join public.price_materials pm on pm.key = qty.key;
-
-  insert into public.stock_sales (model_id, quantity, unit_price, unit_cost, profit, notes)
-  values (
-    p_model_id, p_quantity, p_unit_price, v_unit_cost,
-    (p_unit_price - v_unit_cost) * p_quantity,
-    nullif(p_notes, '')
-  )
-  returning * into v_row;
-
-  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_perolas * p_quantity) where key = 'perolas';
-  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_crucifixo * p_quantity) where key = 'crucifixo';
-  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_entremeio * p_quantity) where key = 'entremeio';
-  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_fio * p_quantity) where key = 'fio';
-  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_embalagem * p_quantity) where key = 'embalagem';
-  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_outros * p_quantity) where key = 'outros';
-
-  return v_row;
-end;
-$$;
-grant execute on function public.register_sale(uuid, integer, numeric, text) to authenticated;
-
--- --------------------------------------------------------------------------
--- 10) Per-model material costs — each terço model now keeps its own cost
---     per material (the same material can cost more in one model than
---     another, e.g. nicer pearls). Editing a model's own cost no longer
---     changes any other model's price. The material's global unit_cost
---     (from step 8) is now only used as a starting suggestion when
---     creating a brand new model, and still drives stock/purchases.
--- --------------------------------------------------------------------------
-
-alter table public.price_models
-  add column if not exists cost_perolas    numeric(10,4) not null default 0,
-  add column if not exists cost_crucifixo  numeric(10,4) not null default 0,
-  add column if not exists cost_entremeio  numeric(10,4) not null default 0,
-  add column if not exists cost_fio        numeric(10,4) not null default 0,
-  add column if not exists cost_embalagem  numeric(10,4) not null default 0,
-  add column if not exists cost_outros     numeric(10,4) not null default 0;
-
--- one-time backfill: give existing models the current global costs so
--- their price doesn't suddenly drop to zero after this migration
-update public.price_models m
-set cost_perolas   = coalesce((select unit_cost from public.price_materials where key = 'perolas'), 0),
-    cost_crucifixo = coalesce((select unit_cost from public.price_materials where key = 'crucifixo'), 0),
-    cost_entremeio = coalesce((select unit_cost from public.price_materials where key = 'entremeio'), 0),
-    cost_fio       = coalesce((select unit_cost from public.price_materials where key = 'fio'), 0),
-    cost_embalagem = coalesce((select unit_cost from public.price_materials where key = 'embalagem'), 0),
-    cost_outros    = coalesce((select unit_cost from public.price_materials where key = 'outros'), 0)
-where m.cost_perolas = 0 and m.cost_crucifixo = 0 and m.cost_entremeio = 0
-  and m.cost_fio = 0 and m.cost_embalagem = 0 and m.cost_outros = 0;
-
--- register_sale() now costs the sale using the MODEL's own cost_* columns
--- instead of joining the shared price_materials table.
-create or replace function public.register_sale(
-  p_model_id   uuid,
-  p_quantity   integer,
-  p_unit_price numeric,
-  p_notes      text
-)
-returns public.stock_sales
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_model     public.price_models;
-  v_unit_cost numeric(10,2) := 0;
-  v_row       public.stock_sales;
-begin
   select * into v_model from public.price_models where id = p_model_id;
   if not found then
     raise exception 'Modelo de terço não encontrado.';
@@ -540,22 +505,161 @@ begin
   )
   returning * into v_row;
 
-  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_perolas * p_quantity) where key = 'perolas';
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_perolas   * p_quantity) where key = 'perolas';
   update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_crucifixo * p_quantity) where key = 'crucifixo';
   update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_entremeio * p_quantity) where key = 'entremeio';
-  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_fio * p_quantity) where key = 'fio';
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_fio       * p_quantity) where key = 'fio';
   update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_embalagem * p_quantity) where key = 'embalagem';
-  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_outros * p_quantity) where key = 'outros';
+  update public.price_materials set stock_quantity = stock_quantity - (v_model.qty_outros    * p_quantity) where key = 'outros';
 
   return v_row;
 end;
 $$;
--- (grant already applied above, right after the first CREATE OR REPLACE
--- of this same function signature — Postgres grants apply to the
--- function's name+argument signature, not its body, so re-granting here
--- would just be a harmless no-op; removed to avoid the duplicate.)
+
+-- permissões das funções: create_order é pública (é o checkout; "authenticated"
+-- fica liberado porque, logada no /admin, o checkout do site roda como logada);
+-- register_* só para logados (e a checagem de admin acontece dentro/por RLS).
+revoke all on function public.create_order(text, text, text, text, jsonb, text)  from public;
+revoke all on function public.register_purchase(uuid, numeric, numeric, text)    from public, anon;
+revoke all on function public.register_sale(uuid, integer, numeric, text)        from public, anon;
+
+grant execute on function public.create_order(text, text, text, text, jsonb, text)  to anon, authenticated;
+grant execute on function public.register_purchase(uuid, numeric, numeric, text)    to authenticated;
+grant execute on function public.register_sale(uuid, integer, numeric, text)        to authenticated;
+
+-- --------------------------------------------------------------------------
+-- 7) SEGURANÇA DAS TABELAS (RLS: só admin lê/escreve; público só via create_order)
+-- --------------------------------------------------------------------------
+alter table public.orders               enable row level security;
+alter table public.order_items          enable row level security;
+alter table public.order_status_history enable row level security;
+alter table public.price_materials      enable row level security;
+alter table public.price_models         enable row level security;
+alter table public.stock_purchases      enable row level security;
+alter table public.stock_sales          enable row level security;
+alter table public.coupons              enable row level security;
+alter table public.coupon_prices        enable row level security;
+
+drop policy if exists "admins can read orders" on public.orders;
+create policy "admins can read orders"
+  on public.orders for select to authenticated
+  using ((select private.is_admin()));
+
+drop policy if exists "admins can update orders" on public.orders;
+create policy "admins can update orders"
+  on public.orders for update to authenticated
+  using ((select private.is_admin()))
+  with check ((select private.is_admin()));
+
+drop policy if exists "admins can delete orders" on public.orders;
+create policy "admins can delete orders"
+  on public.orders for delete to authenticated
+  using ((select private.is_admin()));
+
+drop policy if exists "admins can read order items" on public.order_items;
+create policy "admins can read order items"
+  on public.order_items for select to authenticated
+  using ((select private.is_admin()));
+
+drop policy if exists "admins can read order history" on public.order_status_history;
+create policy "admins can read order history"
+  on public.order_status_history for select to authenticated
+  using ((select private.is_admin()));
+
+drop policy if exists "admins manage price materials" on public.price_materials;
+create policy "admins manage price materials"
+  on public.price_materials for all to authenticated
+  using ((select private.is_admin())) with check ((select private.is_admin()));
+
+drop policy if exists "admins manage price models" on public.price_models;
+create policy "admins manage price models"
+  on public.price_models for all to authenticated
+  using ((select private.is_admin())) with check ((select private.is_admin()));
+
+drop policy if exists "admins manage stock purchases" on public.stock_purchases;
+create policy "admins manage stock purchases"
+  on public.stock_purchases for all to authenticated
+  using ((select private.is_admin())) with check ((select private.is_admin()));
+
+drop policy if exists "admins manage stock sales" on public.stock_sales;
+create policy "admins manage stock sales"
+  on public.stock_sales for all to authenticated
+  using ((select private.is_admin())) with check ((select private.is_admin()));
+
+drop policy if exists "admins manage coupons" on public.coupons;
+create policy "admins manage coupons"
+  on public.coupons for all to authenticated
+  using ((select private.is_admin())) with check ((select private.is_admin()));
+
+drop policy if exists "admins manage coupon prices" on public.coupon_prices;
+create policy "admins manage coupon prices"
+  on public.coupon_prices for all to authenticated
+  using ((select private.is_admin())) with check ((select private.is_admin()));
+
+-- segundo cadeado: o público (anon) não precisa de acesso direto a NENHUMA tabela
+revoke all on table
+  public.orders,
+  public.order_items,
+  public.order_status_history,
+  public.price_materials,
+  public.price_models,
+  public.stock_purchases,
+  public.stock_sales,
+  public.coupons,
+  public.coupon_prices
+from anon;
+
+-- funções novas que você criar no futuro não nascem executáveis pelo público
+alter default privileges in schema public
+  revoke execute on functions from public, anon, authenticated;
+
+-- --------------------------------------------------------------------------
+-- 8) REALTIME — aviso "Novo pedido" no painel sem recarregar a página
+-- --------------------------------------------------------------------------
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'orders'
+  ) then
+    alter publication supabase_realtime add table public.orders;
+  end if;
+end $$;
+
+-- --------------------------------------------------------------------------
+-- 9) CUPOM "APARECIDA" — rodar de novo atualiza os preços abaixo
+-- --------------------------------------------------------------------------
+insert into public.coupons (code, active) values ('APARECIDA', true)
+on conflict (code) do nothing;
+
+insert into public.coupon_prices (coupon_code, product_id, promo_price) values
+  ('APARECIDA', 'terco-aparecida',          32.90),  -- Terço Nossa Senhora Aparecida (de 39,90)
+  ('APARECIDA', 'terco-corrente-aparecida',  9.90),  -- Terço de Corrente (de 19,90)
+  ('APARECIDA', 'santinha-aparecida',        6.00),  -- Santinha (de 7,90)
+  ('APARECIDA', 'chaveiro-aparecida',        6.00),  -- Chaveiro (de 7,90)
+  ('APARECIDA', 'imagem-aparecida',         14.90)   -- Imagem de N.S. Aparecida 15 cm (de 19,90)
+on conflict (coupon_code, product_id) do update set promo_price = excluded.promo_price;
+
+commit;
 
 -- ==========================================================================
--- Done. Next: Authentication → Users → Add user, to create your first
--- admin login (see README.md, step 4).
+-- COMANDOS ÚTEIS (rode quando precisar, em uma query separada)
+--
+-- Tornar alguém admin (depois de criar o usuário em Authentication → Users):
+--   insert into private.admin_users (user_id)
+--   select id from auth.users where email = 'seu-email@exemplo.com'
+--   on conflict do nothing;
+--
+-- Desligar o cupom APARECIDA:
+--   update public.coupons set active = false where code = 'APARECIDA';
+-- Dar prazo ao cupom:
+--   update public.coupons set expires_at = '2026-12-31 23:59-03' where code = 'APARECIDA';
+-- Criar outro cupom:
+--   insert into public.coupons (code) values ('NATAL');
+--   insert into public.coupon_prices (coupon_code, product_id, promo_price)
+--   values ('NATAL', 'terco-infantil-rosa', 19.90);
+-- (O site também precisa conhecer o cupom para mostrar o preço antes de
+--  finalizar — veja COUPONS em js/main.js.)
 -- ==========================================================================

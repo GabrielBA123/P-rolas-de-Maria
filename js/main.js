@@ -29,6 +29,8 @@ document.querySelectorAll('.bead-divider').forEach(function(el){
 // guardado no localStorage e recarregado em qualquer página do site. Expira
 // em 3 dias. O servidor continua validando tudo no pedido.
 var CART_STORAGE_KEY = 'pdm-cart-v1';
+// Produtos que saíram do site: se alguém ainda tem um deles no carrinho guardado, é removido.
+var RETIRED_PRODUCTS = ['pulseira-sao-bento-branco'];
 var CART_MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
 
 function loadCart(){
@@ -40,7 +42,7 @@ function loadCart(){
 
     // só aceita itens com o formato esperado (protege contra dado velho/corrompido)
     var items = data.items.filter(function(i){
-      return i && typeof i.id === 'string' && typeof i.name === 'string' && i.name.indexOf('<') === -1
+      return i && typeof i.id === 'string' && RETIRED_PRODUCTS.indexOf(i.id) === -1 && typeof i.name === 'string' && i.name.indexOf('<') === -1
         && typeof i.img === 'string' && i.img.indexOf('assets/') === 0
         && typeof i.price === 'number' && isFinite(i.price) && i.price >= 0
         && typeof i.qty === 'number' && i.qty >= 1 && i.qty <= 50 && Math.floor(i.qty) === i.qty;
@@ -83,11 +85,53 @@ document.querySelectorAll('.product-card[data-product-id]').forEach(function(car
   var mainImg = card.querySelector('.main-img');
   var defaultImg = mainImg.getAttribute('src'); // cart thumbnail always uses the cover photo, even if the visitor is browsing other gallery views
 
-  card.querySelectorAll('.gallery-thumbs img').forEach(function(t){
+  // Variações opcionais (ex.: cor do terço infantil). Cada botão `.variant-btn`
+  // carrega o próprio id/nome/preço/foto de capa; ao adicionar ao carrinho,
+  // cada cor vira uma linha separada. Produtos sem `.variant-btn` não mudam.
+  var variantBtns = Array.prototype.slice.call(card.querySelectorAll('.variant-btn'));
+  var currentVariant = variantBtns.length
+    ? (variantBtns.filter(function(b){ return b.classList.contains('selected'); })[0] || variantBtns[0])
+    : null;
+  var thumbs = card.querySelectorAll('.gallery-thumbs img');
+
+  function selectVariant(btn, showCover){
+    currentVariant = btn;
+    variantBtns.forEach(function(b){
+      var on = (b === btn);
+      b.classList.toggle('selected', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
+    var cur = card.querySelector('.variant-current');
+    if(cur) cur.textContent = btn.dataset.label || '';
+    // foto da pérola/material da cor escolhida (opcional, `.variant-preview-img`)
+    var pv = card.querySelector('.variant-preview-img');
+    if(pv && btn.dataset.swatch){
+      pv.src = btn.dataset.swatch;
+      pv.alt = 'Pérola ' + (btn.dataset.label || '');
+      var pn = card.querySelector('.variant-preview-name');
+      if(pn) pn.textContent = btn.dataset.label || '';
+    }
+    var note = card.querySelector('.variant-note');   // aviso quando a cor ainda não tem foto
+    if(note) note.style.display = btn.dataset.cover ? 'none' : 'block';
+    if(showCover && btn.dataset.cover){
+      mainImg.src = btn.dataset.cover;
+      thumbs.forEach(function(t){ t.classList.toggle('active', t.dataset.full === btn.dataset.cover); });
+    }
+  }
+  variantBtns.forEach(function(b){
+    b.addEventListener('click', function(){ selectVariant(b, true); });
+  });
+
+  thumbs.forEach(function(t){
     t.addEventListener('click', function(){
       mainImg.src = t.dataset.full;
-      card.querySelectorAll('.gallery-thumbs img').forEach(function(x){x.classList.remove('active');});
+      thumbs.forEach(function(x){x.classList.remove('active');});
       t.classList.add('active');
+      // clicar numa foto de outra cor troca a cor selecionada
+      if(t.dataset.variant){
+        var vb = variantBtns.filter(function(b){ return b.dataset.variant === t.dataset.variant; })[0];
+        if(vb && vb !== currentVariant) selectVariant(vb, false);
+      }
     });
   });
 
@@ -100,14 +144,47 @@ document.querySelectorAll('.product-card[data-product-id]').forEach(function(car
     qtyDisplay.textContent = qty;
   });
 
+  // Entremeio (santo) opcional por produto: `select[data-entremeios]` dentro do card.
+  var entSelect = card.querySelector('select[data-entremeios]');
+  var entHint = card.querySelector('.entremeio-hint');
+  if(entSelect && entHint){
+    entSelect.addEventListener('change', function(){
+      entHint.style.display = (entSelect.value === 'outro') ? 'block' : 'none';
+    });
+  }
+
   card.querySelector('.add-cart-btn').addEventListener('click', function(){
-    var id = card.dataset.productId;
-    var name = card.dataset.productName;
-    var price = parseFloat(card.dataset.productPrice);
+    var src = currentVariant || card;                 // cor escolhida (se o produto tiver cores)
+    var id = src.dataset.productId;
+    var name = src.dataset.productName;
+    var price = parseFloat(src.dataset.productPrice);
+    var img = currentVariant ? (currentVariant.dataset.cover || defaultImg) : defaultImg;
+    var details = null;
+
+    if(entSelect){
+      if(!entSelect.value){
+        showToast('Escolha o entremeio antes de adicionar');
+        entSelect.focus();
+        return;
+      }
+      var ent = (entSelect.value === 'outro') ? 'entremeio especial (a combinar no WhatsApp)' : entSelect.value;
+      // cada combinação cor + entremeio é uma linha própria no carrinho e no pedido
+      id = id + '--' + slugify(ent);
+      details = {
+        tipoLabel: card.dataset.productName,
+        cor: currentVariant ? (currentVariant.dataset.label || null) : null,
+        entremeio: ent
+      };
+      name = name + ' — entremeio: ' + ent;
+    }
 
     var existing = cart.find(function(i){ return i.id === id; });
     if(existing){ existing.qty += qty; }
-    else { cart.push({ id: id, name: name, price: price, img: defaultImg, qty: qty }); }
+    else {
+      var item = { id: id, name: name, price: price, img: img, qty: qty };
+      if(details) item.customDetails = details;   // vai para o pedido (checkout.js)
+      cart.push(item);
+    }
 
     renderCart();
     showToast('Adicionado ao carrinho');
@@ -435,6 +512,33 @@ var COUPONS = {
 var appliedCoupon = null; // código do cupom aplicado (ex.: 'APARECIDA') ou null
 
 function roundMoney(v){ return Math.round(v * 100) / 100; }
+
+// ---------- lista de entremeios (santos) ----------
+// FONTE ÚNICA: todo <select data-entremeios> do site (terços personalizados e
+// terços emborrachados) é preenchido a partir desta lista. Para adicionar um
+// santo(a), basta incluir o nome aqui — ele aparece em todos os lugares.
+var ENTREMEIOS = [
+  'Carlo Acutis', 'Divino Espírito Santo', 'Jesus', 'Jesus Misericordioso',
+  'Menino Jesus de Praga', 'Nossa Senhora Aparecida', 'Nossa Senhora da Conceição',
+  'Nossa Senhora das Graças', 'Nossa Senhora de Fátima', 'Nossa Senhora de Guadalupe',
+  'Nossa Senhora Desatadora de Nós', 'Nossa Senhora do Rosário', 'Padre Pio',
+  'Pai das Misericórdias', 'Sagrada Família', 'Sagrado Coração de Jesus',
+  'Sagrado Coração de Maria', 'Santa Dulce', 'Santa Luzia', 'Santa Rita',
+  'Santa Terezinha', 'Santo Antônio', 'São Bento', 'São Francisco', 'São José',
+  'São Miguel Arcanjo'
+];
+document.querySelectorAll('select[data-entremeios]').forEach(function(sel){
+  var outro = sel.querySelector('option[value="outro"]'); // "entremeio especial" fica sempre por último
+  ENTREMEIOS.forEach(function(nome){
+    var o = document.createElement('option');
+    o.value = nome; o.textContent = nome;
+    sel.insertBefore(o, outro);
+  });
+});
+
+function slugify(t){
+  return String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
 
 // preço unitário do item considerando o cupom aplicado (nunca maior que o normal)
 function couponUnitPrice(item){
