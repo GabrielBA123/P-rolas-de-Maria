@@ -831,3 +831,19 @@
   .variant-preview-text{display:flex;flex-direction:column;gap:2px;}
   .variant-preview-text span{font-family:'Jost',sans-serif;font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);}
   .variant-preview-name{font-family:'Cormorant Garamond',serif;font-size:1.45rem;color:var(--heading);font-weight:600;line-height:1.15;}
+
+  /* ---------- catálogo vindo do banco ---------- */
+  .soldout-badge{
+    position:absolute;top:14px;left:14px;z-index:2;
+    background:#7A7466;color:#fff;font-family:'Jost',sans-serif;font-size:.72rem;
+    font-weight:600;letter-spacing:.03em;padding:6px 14px;border-radius:999px;
+  }
+  .soldout-badge.catalog-badge{top:12px;left:12px;}
+  .variant-btn:disabled{opacity:.5;cursor:not-allowed;text-decoration:line-through;}
+  .variant-soldout{font-size:.72rem;margin-left:2px;text-decoration:none;display:inline-block;}
+  .add-cart-btn:disabled{opacity:.55;cursor:not-allowed;background:#7A7466;}
+  .product-desc p{margin:0 0 10px;}
+  .catalog-loading,.catalog-empty{
+    grid-column:1/-1;text-align:center;color:var(--ink-soft);
+    font-family:'Lora',serif;font-style:italic;padding:30px 10px;margin:0;
+  }

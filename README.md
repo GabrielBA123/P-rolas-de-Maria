@@ -1,5 +1,9 @@
 # Pérolas de Maria — loja + painel administrativo
 
+> **Novidade:** produtos, opções (cores/modelos), fotos e cupons agora são
+> cadastrados no **painel (/admin → Produtos e Cupons)**, sem mexer em código.
+> Veja a seção "Produtos e cupons pelo painel" mais abaixo.
+
 Este projeto é 100% o mesmo site que você já tinha (mesmas cores, fontes,
 animações e layout) — só que agora organizado em arquivos separados, com
 pedidos salvos automaticamente no banco de dados e um painel administrativo
@@ -16,25 +20,33 @@ normalmente, como antes.
 
 ```
 perolas-app/
-├── index.html                 → a loja (era um único arquivo, agora limpo)
-├── css/
-│   └── styles.css             → todo o visual da loja (extraído do HTML)
+├── index.html                 → a loja (home; produtos vêm do banco)
+├── produto-template.html      → modelo da página de cada produto
+├── api/
+│   ├── produto.js             → monta /produto/<endereço> no servidor (Vercel)
+│   ├── sitemap.js             → /sitemap.xml gerado dos produtos ativos
+│   └── _supabase.js           → leitura pública do Supabase (mesma chave do site)
+├── css/styles.css             → todo o visual da loja
 ├── js/
 │   ├── supabase-client.js     → onde você cola a URL + chave do Supabase
-│   ├── main.js                → carrinho, galeria, personalizador, tema
+│   ├── product-render.js      → monta cards e páginas de produto (site + servidor)
+│   ├── catalogo.js            → vitrine da home (lê os produtos do banco)
+│   ├── main.js                → carrinho, galeria, cupom, personalizador, tema
 │   └── checkout.js            → salva o pedido no banco + abre o WhatsApp
-├── assets/
-│   └── images/                → fotos dos produtos (antes elas viviam
-│                                 "escondidas" dentro do HTML como texto
-│                                 codificado — agora são arquivos de
-│                                 verdade, o que deixa o site mais leve)
+├── assets/images/             → fotos antigas dos produtos
 ├── admin/
 │   ├── index.html             → painel administrativo (/admin)
-│   ├── update-password.html   → página de "criar nova senha"
 │   ├── css/admin.css          → visual do painel
-│   └── js/admin.js            → toda a lógica do painel
+│   └── js/
+│       ├── admin.js           → pedidos (+ botões de WhatsApp)
+│       ├── produtos.js        → aba Produtos
+│       ├── cupons.js          → aba Cupons
+│       └── calculadora.js     → calculadora de preço e estoque
 ├── sql/
-│   └── schema.sql             → script único para criar tudo no Supabase
+│   ├── schema.sql             → tudo para criar o banco do zero (= schema-completo.sql)
+│   ├── catalogo.sql           → só a parte do catálogo (para banco que já existe)
+│   └── historico/             → migrações antigas (já aplicadas, não rode de novo)
+├── vercel.json                → endereços, redirecionamentos antigos e segurança
 └── README.md                  → este arquivo
 ```
 
@@ -153,6 +165,51 @@ e-mail dela. Não precisa mexer em nenhum código. Ter conta no Supabase
 pedidos.
 
 *(Todo administrador tem acesso total — não existem níveis de permissão diferentes. Se um dia você quiser um funcionário com acesso mais limitado, dá pra evoluir isso depois.)*
+
+---
+
+## Produtos e cupons pelo painel
+
+**Produtos** (`/admin` → aba **Produtos**)
+- **＋ Novo produto:** nome, preço, frase curta (card da home), descrição, fotos
+  e opções. Linhas da descrição começando com `- ` viram tópicos; `**texto**`
+  vira negrito.
+- **Opções** (cor, modelo...): cada uma pode ter preço próprio, bolinha de cor,
+  ficar esgotada e ter uma foto de amostra (ex.: da pérola). Cada opção vira
+  uma linha própria no carrinho e no pedido.
+- **Fotos:** envie do celular — são reduzidas sozinhas. Ligue uma foto a uma
+  opção para ela aparecer quando a cliente escolher aquela opção.
+- **Visível / Esgotado:** os botões na lista escondem o produto ou impedem a
+  compra, sem apagar nada. **▲ ▼** muda a ordem da vitrine.
+- Marcar **"A cliente escolhe o santo(a) do entremeio"** mostra a lista de
+  entremeios e exige a escolha (a lista fica em `js/main.js`, `ENTREMEIOS`).
+- O endereço do produto (`/produto/nome`) não muda depois de criado: é o que
+  mantém cupons e links funcionando.
+- Mudanças aparecem no site em até **1 minuto**.
+
+**Cupons** (aba **Cupons**): código, ativo/desativado, validade (até o fim do
+dia) e o **preço especial de cada produto**. Um cupom novo funciona na hora.
+Em produto com opções, o cupom vale para todas as opções.
+
+**Pedidos:** no detalhe do pedido, **"Falar com a cliente"** abre o WhatsApp
+com mensagem pronta (cobrar Pix, pagamento recebido, em preparação, enviado
+com rastreio, entregue).
+
+**Como funciona por trás:** o **preço é sempre decidido pelo servidor** no
+momento do pedido (tabela `products`), nunca pelo navegador — então mudar o
+preço no painel vale de verdade. Terços personalizados têm preço fixo por
+regra no SQL (6mm R$ 19,90 / com nome R$ 22,90 · 8mm R$ 24,90 / com nome
+R$ 26,90 · só pérolas R$ 29,90); se mudar no `js/main.js`, mude também em
+`create_order()` no SQL.
+
+**Cuidados**
+- O site depende do Supabase estar acordado (plano gratuito pausa após ~7 dias
+  parado). O ping automático em `.github/workflows` evita isso.
+- O carrossel do topo da home (`index.html`) continua manual; se ele cita preço,
+  atualize o texto quando mudar o preço no painel.
+- Instalar do zero: rode `sql/schema.sql`. Já tem banco funcionando: rode
+  só `sql/catalogo.sql` (cadastra os produtos atuais na 1ª vez e não
+  sobrescreve o que você editar depois).
 
 ---
 

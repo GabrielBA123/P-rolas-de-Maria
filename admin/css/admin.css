@@ -308,3 +308,100 @@ table.orders-table{width:100%;border-collapse:collapse;}
   }
   .detail-panel{width:100%;}
 }
+
+
+/* ==========================================================================
+   Produtos e cupons
+   ========================================================================== */
+.toolbar-btn{width:auto;padding:12px 22px;margin:0;white-space:nowrap;}
+.tab-hint{color:var(--ink-soft);font-size:.86rem;margin:0 0 16px;}
+.prod-list{display:flex;flex-direction:column;gap:10px;}
+.prod-row{
+  display:flex;align-items:center;gap:14px;background:var(--paper);border:1px solid var(--line);
+  border-radius:14px;padding:12px 14px;flex-wrap:wrap;
+}
+.prod-row.hidden-prod{opacity:.62;}
+.prod-thumb{width:64px;height:64px;border-radius:10px;object-fit:cover;background:var(--cream);flex-shrink:0;border:1px solid var(--line);}
+.prod-main{flex:1;min-width:180px;}
+.prod-name{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--sapphire-deep);font-weight:600;line-height:1.2;}
+.prod-meta{font-family:'Jost',sans-serif;font-size:.82rem;color:var(--ink-soft);margin-top:3px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.chip{display:inline-block;font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--cream);border:1px solid var(--line);color:var(--ink-soft);}
+.chip.ok{background:#E3F2E8;border-color:#BFE0CA;color:var(--green);}
+.chip.warn{background:#FBF1D9;border-color:#EBD596;color:var(--amber);}
+.chip.off{background:#F3E1E1;border-color:#E3B9B9;color:var(--red);}
+.prod-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.mini-btn{
+  background:none;border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer;
+  font-family:'Jost',sans-serif;font-size:.78rem;color:var(--ink-soft);transition:.2s;white-space:nowrap;
+}
+.mini-btn:hover{border-color:var(--sapphire);color:var(--sapphire-deep);}
+.mini-btn.on{background:var(--sapphire);border-color:var(--sapphire);color:#fff;}
+.mini-btn.danger:hover{border-color:var(--red);color:var(--red);}
+.mini-btn:disabled{opacity:.4;cursor:not-allowed;}
+.move-btns{display:flex;flex-direction:column;gap:2px;}
+.move-btns .mini-btn{padding:1px 9px;line-height:1.2;}
+
+.editor-panel{width:640px;}
+.editor-panel .detail-body{padding-bottom:110px;}
+.ed-section{margin-bottom:26px;}
+.ed-section h3{font-size:1.25rem;margin-bottom:10px;}
+.ed-hint{font-size:.8rem;color:var(--ink-soft);margin:4px 0 0;line-height:1.5;}
+.ed-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.ed-field{margin-bottom:12px;}
+.ed-field label{display:block;font-family:'Jost',sans-serif;font-size:.78rem;color:var(--ink-soft);}
+.ed-field input[type=text], .ed-field input[type=number], .ed-field input[type=date], .ed-field textarea, .ed-field select{
+  width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;margin-top:5px;
+  font-family:'Lora',serif;font-size:.92rem;background:#fff;color:var(--ink);box-sizing:border-box;
+}
+.ed-field textarea{min-height:150px;resize:vertical;line-height:1.5;}
+.ed-field input[readonly]{background:var(--cream);color:var(--ink-soft);}
+.ed-checks{display:flex;flex-direction:column;gap:8px;margin:6px 0 0;}
+.ed-check{display:flex;gap:10px;align-items:flex-start;font-family:'Jost',sans-serif;font-size:.88rem;color:var(--ink);cursor:pointer;}
+.ed-check input{width:18px;height:18px;margin-top:2px;accent-color:var(--sapphire);flex-shrink:0;}
+.ed-check small{display:block;color:var(--ink-soft);font-size:.76rem;}
+.var-row, .img-row, .cp-row{
+  background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;
+  display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;
+}
+.var-fields{flex:1;min-width:220px;display:grid;grid-template-columns:1.4fr 70px 1fr;gap:8px;align-items:end;}
+.var-fields label, .cp-row label{display:block;font-family:'Jost',sans-serif;font-size:.7rem;color:var(--ink-soft);margin-bottom:3px;}
+.var-fields input[type=text], .var-fields input[type=number], .cp-row input, .cp-row select{
+  width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:.88rem;box-sizing:border-box;background:#fff;
+}
+.var-fields input[type=color]{width:100%;height:38px;padding:2px;border:1px solid var(--line);border-radius:8px;background:#fff;}
+.var-extra{width:100%;display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-family:'Jost',sans-serif;font-size:.8rem;color:var(--ink-soft);}
+.var-extra .ed-check{font-size:.8rem;}
+.swatch-pick{display:flex;align-items:center;gap:8px;}
+.swatch-pick img{width:40px;height:40px;border-radius:8px;object-fit:cover;border:1px solid var(--line);}
+.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+.img-card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;}
+.img-card img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;background:var(--cream);}
+.img-card select{width:100%;padding:6px;border:1px solid var(--line);border-radius:8px;font-size:.78rem;background:#fff;}
+.img-card .img-actions{display:flex;justify-content:space-between;gap:4px;}
+.img-card .img-actions .mini-btn{padding:4px 9px;}
+.file-btn{display:inline-block;cursor:pointer;}
+.file-btn input{display:none;}
+.cp-row{align-items:flex-end;}
+.cp-row .cp-product{flex:2;min-width:200px;}
+.cp-row .cp-price{flex:1;min-width:110px;}
+.editor-foot{
+  position:sticky;bottom:0;background:var(--cream);border-top:1px solid var(--line);padding:14px 0 6px;
+  display:flex;gap:10px;margin-top:20px;
+}
+.editor-foot .btn-primary, .editor-foot .btn-ghost{margin:0;flex:1;}
+.wa-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.wa-btn{
+  background:#E6F7EC;border:1px solid #BFE0CA;color:#1f6b3d;border-radius:999px;padding:9px 14px;
+  font-family:'Jost',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:.2s;
+}
+.wa-btn:hover{background:#d3f0de;}
+.wa-btn.primary{background:#25D366;border-color:#25D366;color:#fff;font-weight:600;}
+.wa-btn.primary:hover{background:#1fb858;}
+@media (max-width:760px){
+  .editor-panel{width:100%;}
+  .ed-grid{grid-template-columns:1fr;}
+  .var-fields{grid-template-columns:1fr 70px;}
+  .var-fields .var-price{grid-column:1 / -1;}
+  .toolbar{flex-wrap:wrap;gap:10px;}
+  .toolbar-btn{width:100%;}
+}

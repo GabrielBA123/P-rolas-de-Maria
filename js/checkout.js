@@ -90,9 +90,9 @@ async function finalizarPedido(){
     const couponCode = appliedCoupon; // null se não houver cupom aplicado
 
     // build the items payload the create_order() RPC expects.
-    // Note: unit_price is always the NORMAL price — if a coupon was
-    // applied, the server swaps in the promo price itself (the browser
-    // can't set a coupon price on its own).
+    // Note: o servidor decide o preço (tabela products no banco) e aplica o
+    // cupom sozinho — unit_price/line_total vão só por compatibilidade e são
+    // ignorados por create_order().
     const items = cart.map(function(i){
       return {
         product_id: i.id,
@@ -159,6 +159,11 @@ async function finalizarPedido(){
       // these products) — the customer can tap "Remover" and order at the
       // normal price.
       errorEl.textContent = err.message + ' Toque em "Remover" no campo de cupom para continuar sem desconto.';
+    } else if(err && err.message && /^(O produto|Escolha|Um dos produtos)/.test(err.message)){
+      // Produto esgotado / fora do ar / sem opção ou entremeio escolhido: a frase do servidor
+      // já é clara. Também confere o carrinho de novo para tirar o que saiu do ar.
+      errorEl.textContent = err.message;
+      syncCartWithCatalog();
     } else if(err && err.message && err.message.indexOf('Você já enviou pedidos') === 0){
       // Server-side rate limit from create_order() — already a complete,
       // friendly sentence, so show it as-is instead of prefixing it.

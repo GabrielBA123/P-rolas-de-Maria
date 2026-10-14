@@ -399,6 +399,7 @@ async function openDetail(orderId){
       '<h3>Status</h3>' +
       '<div class="status-actions">' + statusButtons + '</div>' +
     '</div>' +
+    whatsappSection(order) +
     '<div class="detail-section">' +
       '<h3>Histórico</h3>' +
       '<div id="historyList">Carregando...</div>' +
@@ -409,6 +410,88 @@ async function openDetail(orderId){
   detailPanel.classList.add('show');
 
   loadHistory(orderId);
+}
+
+/* ==========================================================================
+   WHATSAPP — mensagens prontas para a cliente (abre a conversa já escrita)
+   ========================================================================== */
+const PIX_KEY = '32 999976067';
+
+// "(32) 99999-9999" → "5532999999999" (formato que o wa.me exige)
+function normalizePhone(raw){
+  let d = String(raw || '').replace(/\D/g, '').replace(/^0+/, '');
+  if(d.length === 10 || d.length === 11) d = '55' + d;
+  return d;
+}
+
+function firstName(full){
+  return String(full || '').trim().split(/\s+/)[0] || '';
+}
+
+// kind: 'cobrar' | 'pago' | 'preparacao' | 'enviado' | 'entregue' | 'livre'
+function buildWhatsAppMessage(order, kind, tracking){
+  const num = formatOrderNumber(order.order_number);
+  const nome = firstName(order.customer_name);
+  const oi = 'Olá, ' + nome + '! Aqui é da Pérolas de Maria 🌹\n\n';
+  switch(kind){
+    case 'cobrar':
+      return oi + 'Seu pedido ' + num + ' (' + formatBRL(order.total) + ') está aguardando o pagamento via Pix.\n\n' +
+        'Chave Pix (celular): ' + PIX_KEY + '\n\n' +
+        'Assim que pagar, é só nos enviar o comprovante por aqui 🙏';
+    case 'pago':
+      return oi + 'Recebemos o pagamento do seu pedido ' + num + ', muito obrigada! 🙏\n\n' +
+        'Já vamos preparar tudo com muito carinho.';
+    case 'preparacao':
+      return oi + 'O seu pedido ' + num + ' está sendo preparado com muito carinho 🌹\n\n' +
+        'Assim que for enviado, avisamos por aqui!';
+    case 'enviado':
+      return oi + 'O seu pedido ' + num + ' foi enviado! 🚚\n\n' +
+        (tracking ? 'Código de rastreio: ' + tracking + '\n\n' : '') +
+        'Qualquer dúvida, é só chamar.';
+    case 'entregue':
+      return oi + 'O seu pedido ' + num + ' consta como entregue. Esperamos que você ame! 🌹\n\n' +
+        'Se puder, nos conte o que achou e nos marque no Instagram @perolasdemaria2026 🙏';
+    default:
+      return oi + 'Sobre o seu pedido ' + num + ': ';
+  }
+}
+
+function whatsappSection(order){
+  const suggested = {
+    aguardando_pagamento: 'cobrar', pago: 'pago', preparacao: 'preparacao', enviado: 'enviado', entregue: 'entregue'
+  }[order.status] || 'livre';
+  const buttons = [
+    ['cobrar',     '💳 Cobrar pagamento'],
+    ['pago',       '✅ Pagamento recebido'],
+    ['preparacao', '📦 Em preparação'],
+    ['enviado',    '🚚 Pedido enviado'],
+    ['entregue',   '🌹 Pedido entregue'],
+    ['livre',      '💬 Conversa livre']
+  ].map(function(b){
+    return '<button type="button" class="wa-btn' + (b[0] === suggested ? ' primary' : '') +
+      '" onclick="openWhatsApp(\'' + order.id + '\',\'' + b[0] + '\')">' + b[1] + '</button>';
+  }).join('');
+  return '<div class="detail-section">' +
+    '<h3>Falar com a cliente</h3>' +
+    '<p class="ed-hint" style="margin:0 0 10px;">Abre o WhatsApp já com a mensagem pronta — é só enviar.</p>' +
+    '<div class="wa-row">' + buttons + '</div>' +
+    '<div class="field" style="margin-bottom:0;"><label for="trackingInput">Código de rastreio (vai na mensagem de envio)</label>' +
+    '<input type="text" id="trackingInput" placeholder="Ex.: AA123456789BR"></div>' +
+  '</div>';
+}
+
+function openWhatsApp(orderId, kind){
+  const order = allOrders.find(function(o){ return o.id === orderId; });
+  if(!order) return;
+  const phone = normalizePhone(order.customer_phone);
+  if(phone.length < 12){
+    showToast('Telefone da cliente parece inválido: ' + order.customer_phone);
+    return;
+  }
+  const trackingEl = document.getElementById('trackingInput');
+  const tracking = trackingEl ? trackingEl.value.trim() : '';
+  const text = buildWhatsAppMessage(order, kind, tracking);
+  window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(text), '_blank');
 }
 
 async function deleteOrder(orderId){

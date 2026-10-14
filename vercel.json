@@ -1,14 +1,122 @@
 {
   "cleanUrls": true,
+  "functions": {
+    "api/produto.js": {
+      "includeFiles": "{produto-template.html,js/supabase-client.js,js/product-render.js}"
+    },
+    "api/sitemap.js": {
+      "includeFiles": "{js/supabase-client.js,js/product-render.js}"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/produto/:slug",
+      "destination": "/api/produto?slug=:slug"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    }
+  ],
   "redirects": [
     {
+      "source": "/produto-terco-infantil.html",
+      "destination": "/produto/terco-infantil",
+      "permanent": true
+    },
+    {
+      "source": "/produto-terco-infantil",
+      "destination": "/produto/terco-infantil",
+      "permanent": true
+    },
+    {
+      "source": "/produto-terco-pulso.html",
+      "destination": "/produto/terco-pulso",
+      "permanent": true
+    },
+    {
+      "source": "/produto-terco-pulso",
+      "destination": "/produto/terco-pulso",
+      "permanent": true
+    },
+    {
+      "source": "/produto-terco-emborrachado.html",
+      "destination": "/produto/terco-emborrachado",
+      "permanent": true
+    },
+    {
+      "source": "/produto-terco-emborrachado",
+      "destination": "/produto/terco-emborrachado",
+      "permanent": true
+    },
+    {
+      "source": "/produto-terco-madeira.html",
+      "destination": "/produto/terco-madeira",
+      "permanent": true
+    },
+    {
+      "source": "/produto-terco-madeira",
+      "destination": "/produto/terco-madeira",
+      "permanent": true
+    },
+    {
+      "source": "/produto-santinha-aparecida.html",
+      "destination": "/produto/santinha-aparecida",
+      "permanent": true
+    },
+    {
+      "source": "/produto-santinha-aparecida",
+      "destination": "/produto/santinha-aparecida",
+      "permanent": true
+    },
+    {
+      "source": "/produto-imagem-aparecida.html",
+      "destination": "/produto/imagem-aparecida",
+      "permanent": true
+    },
+    {
+      "source": "/produto-imagem-aparecida",
+      "destination": "/produto/imagem-aparecida",
+      "permanent": true
+    },
+    {
+      "source": "/produto-chaveiro-aparecida.html",
+      "destination": "/produto/chaveiro-aparecida",
+      "permanent": true
+    },
+    {
+      "source": "/produto-chaveiro-aparecida",
+      "destination": "/produto/chaveiro-aparecida",
+      "permanent": true
+    },
+    {
+      "source": "/produto-pulseira-sao-bento.html",
+      "destination": "/produto/pulseira-sao-bento",
+      "permanent": true
+    },
+    {
+      "source": "/produto-pulseira-sao-bento",
+      "destination": "/produto/pulseira-sao-bento",
+      "permanent": true
+    },
+    {
+      "source": "/produto-terco-corrente-aparecida.html",
+      "destination": "/produto/terco-corrente-aparecida",
+      "permanent": true
+    },
+    {
+      "source": "/produto-terco-corrente-aparecida",
+      "destination": "/produto/terco-corrente-aparecida",
+      "permanent": true
+    },
+    {
       "source": "/produto-terco-infantil-rosa.html",
-      "destination": "/produto-terco-infantil",
+      "destination": "/produto/terco-infantil",
       "permanent": true
     },
     {
       "source": "/produto-terco-infantil-rosa",
-      "destination": "/produto-terco-infantil",
+      "destination": "/produto/terco-infantil",
       "permanent": true
     },
     {

@@ -43,7 +43,7 @@ function loadCart(){
     // só aceita itens com o formato esperado (protege contra dado velho/corrompido)
     var items = data.items.filter(function(i){
       return i && typeof i.id === 'string' && RETIRED_PRODUCTS.indexOf(i.id) === -1 && typeof i.name === 'string' && i.name.indexOf('<') === -1
-        && typeof i.img === 'string' && i.img.indexOf('assets/') === 0
+        && typeof i.img === 'string' && /^(\/?assets\/|https:\/\/)[^"'<>\s]+$/.test(i.img)
         && typeof i.price === 'number' && isFinite(i.price) && i.price >= 0
         && typeof i.qty === 'number' && i.qty >= 1 && i.qty <= 50 && Math.floor(i.qty) === i.qty;
     });
@@ -70,16 +70,23 @@ function saveCart(){
 
 var cart = loadCart();
 
+// escapa texto vindo do banco/painel antes de colocar em HTML
+function escHtml(t){
+  return String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function formatBRL(v){
   return 'R$ ' + v.toFixed(2).replace('.', ',');
 }
 
 // ---------- products / gallery / add-to-cart ----------
-// Works for any number of `.product-card[data-product-id]` blocks in the
-// page — each card carries its own name/price in data attributes, so
-// adding a new terço is just adding another card in index.html, no JS
-// changes needed.
-document.querySelectorAll('.product-card[data-product-id]').forEach(function(card){
+// Os cards de produto vêm do banco (página /produto/<endereço> e destaque da
+// home). Cada card carrega nome/preço/opções em atributos data-*; esta função
+// liga o comportamento (galeria, opções, entremeio, quantidade, carrinho) e
+// pode ser chamada para cards inseridos depois do carregamento da página.
+function initProductCard(card){
+  if(card.dataset.pdmInit) return;
+  card.dataset.pdmInit = '1';
   var qty = 1;
   var qtyDisplay = card.querySelector('.qty-display');
   var mainImg = card.querySelector('.main-img');
@@ -103,13 +110,19 @@ document.querySelectorAll('.product-card[data-product-id]').forEach(function(car
     });
     var cur = card.querySelector('.variant-current');
     if(cur) cur.textContent = btn.dataset.label || '';
+    var priceEl = card.querySelector('.price');            // preço próprio da opção (se houver)
+    if(priceEl && btn.dataset.productPrice){ priceEl.textContent = formatBRL(parseFloat(btn.dataset.productPrice)); }
     // foto da pérola/material da cor escolhida (opcional, `.variant-preview-img`)
     var pv = card.querySelector('.variant-preview-img');
-    if(pv && btn.dataset.swatch){
-      pv.src = btn.dataset.swatch;
-      pv.alt = 'Pérola ' + (btn.dataset.label || '');
-      var pn = card.querySelector('.variant-preview-name');
-      if(pn) pn.textContent = btn.dataset.label || '';
+    if(pv){
+      var box = pv.parentNode;
+      if(btn.dataset.swatch){
+        pv.src = btn.dataset.swatch;
+        pv.alt = 'Pérola ' + (btn.dataset.label || '');
+        var pn = card.querySelector('.variant-preview-name');
+        if(pn) pn.textContent = btn.dataset.label || '';
+        if(box) box.style.display = '';
+      } else if(box){ box.style.display = 'none'; }
     }
     var note = card.querySelector('.variant-note');   // aviso quando a cor ainda não tem foto
     if(note) note.style.display = btn.dataset.cover ? 'none' : 'block';
@@ -154,7 +167,9 @@ document.querySelectorAll('.product-card[data-product-id]').forEach(function(car
   }
 
   card.querySelector('.add-cart-btn').addEventListener('click', function(){
+    if(this.disabled) return;
     var src = currentVariant || card;                 // cor escolhida (se o produto tiver cores)
+    var slug = src.dataset.productSlug || card.dataset.productSlug || card.dataset.productId;
     var id = src.dataset.productId;
     var name = src.dataset.productName;
     var price = parseFloat(src.dataset.productPrice);
@@ -181,7 +196,7 @@ document.querySelectorAll('.product-card[data-product-id]').forEach(function(car
     var existing = cart.find(function(i){ return i.id === id; });
     if(existing){ existing.qty += qty; }
     else {
-      var item = { id: id, name: name, price: price, img: img, qty: qty };
+      var item = { id: id, slug: slug, name: name, price: price, img: img, qty: qty };
       if(details) item.customDetails = details;   // vai para o pedido (checkout.js)
       cart.push(item);
     }
@@ -197,7 +212,8 @@ document.querySelectorAll('.product-card[data-product-id]').forEach(function(car
     qty = 1;
     qtyDisplay.textContent = qty;
   });
-});
+}
+document.querySelectorAll('.product-card[data-product-id]').forEach(initProductCard);
 
 function removeFromCart(id){
   cart = cart.filter(function(i){return i.id !== id;});
@@ -492,24 +508,12 @@ function cartTotal(){
 }
 
 // ---------- cupons de desconto (aplicados na finalização do pedido) ----------
-// ATENÇÃO: esta tabela serve só para MOSTRAR os preços na tela antes de
-// finalizar. O desconto de verdade é calculado no servidor (tabelas
-// `coupons` e `coupon_prices` no Supabase, veja sql/cupons.sql) — o site
-// manda apenas o código do cupom. Se mudar um preço de cupom, mude nos
-// dois lugares.
-var COUPONS = {
-  'APARECIDA': {
-    label: 'Nossa Senhora Aparecida',
-    prices: {
-      'terco-aparecida': 32.90,
-      'terco-corrente-aparecida': 9.90,
-      'santinha-aparecida': 6.00,
-      'chaveiro-aparecida': 6.00,
-      'imagem-aparecida': 14.90
-    }
-  }
-};
-var appliedCoupon = null; // código do cupom aplicado (ex.: 'APARECIDA') ou null
+// Os cupons são criados e desligados no painel (/admin → Cupons). O site pergunta
+// ao servidor (função get_coupon) quais produtos o cupom digitado cobre e por
+// quanto. Isto serve só para MOSTRAR o desconto antes de finalizar: o preço de
+// verdade é sempre calculado no servidor, na hora do pedido.
+var appliedCoupon = null;       // código aplicado (ex.: 'APARECIDA') ou null
+var appliedCouponData = null;   // { code, prices: { '<endereço do produto>': preço promocional } }
 
 function roundMoney(v){ return Math.round(v * 100) / 100; }
 
@@ -527,23 +531,31 @@ var ENTREMEIOS = [
   'Santa Terezinha', 'Santo Antônio', 'São Bento', 'São Francisco', 'São José',
   'São Miguel Arcanjo'
 ];
-document.querySelectorAll('select[data-entremeios]').forEach(function(sel){
-  var outro = sel.querySelector('option[value="outro"]'); // "entremeio especial" fica sempre por último
-  ENTREMEIOS.forEach(function(nome){
-    var o = document.createElement('option');
-    o.value = nome; o.textContent = nome;
-    sel.insertBefore(o, outro);
+function fillEntremeios(root){
+  (root || document).querySelectorAll('select[data-entremeios]').forEach(function(sel){
+    if(sel.dataset.filled) return;
+    sel.dataset.filled = '1';
+    var outro = sel.querySelector('option[value="outro"]'); // "entremeio especial" fica sempre por último
+    ENTREMEIOS.forEach(function(nome){
+      var o = document.createElement('option');
+      o.value = nome; o.textContent = nome;
+      sel.insertBefore(o, outro);
+    });
   });
-});
+}
+fillEntremeios(document);
 
 function slugify(t){
   return String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
 }
 
+// endereço (slug) do produto de um item do carrinho — é a chave dos preços do cupom
+function couponKey(item){ return item.slug || String(item.id).split('--')[0]; }
+
 // preço unitário do item considerando o cupom aplicado (nunca maior que o normal)
 function couponUnitPrice(item){
-  if(!appliedCoupon || !COUPONS[appliedCoupon]) return item.price;
-  var promo = COUPONS[appliedCoupon].prices[item.id];
+  if(!appliedCouponData) return item.price;
+  var promo = appliedCouponData.prices[couponKey(item)];
   return (typeof promo === 'number' && promo < item.price) ? promo : item.price;
 }
 
@@ -556,12 +568,9 @@ function cartDiscount(){
 }
 
 // o cupom só vale se ao menos um item do carrinho participa dele
-function couponAppliesToCart(code){
-  var c = COUPONS[code];
-  if(!c) return false;
-  return cart.some(function(i){
-    return typeof c.prices[i.id] === 'number' && c.prices[i.id] < i.price;
-  });
+function couponAppliesToCart(){
+  if(!appliedCouponData) return false;
+  return cart.some(function(i){ return couponUnitPrice(i) < i.price; });
 }
 
 function setCouponMsg(text, kind){
@@ -573,28 +582,48 @@ function setCouponMsg(text, kind){
   el.style.display = 'block';
 }
 
-function applyCoupon(){
+async function applyCoupon(){
   if(appliedCoupon){ removeCoupon(); return; } // o botão vira "Remover" depois de aplicado
 
   var input = document.getElementById('couponInput');
+  var btn = document.getElementById('couponApplyBtn');
   var code = input.value.trim().toUpperCase();
   if(!code){ setCouponMsg('Digite o código do cupom.', 'error'); return; }
-  if(!COUPONS[code]){ setCouponMsg('Cupom inválido.', 'error'); return; }
-  if(!couponAppliesToCart(code)){
-    setCouponMsg('Este cupom vale só para produtos de ' + COUPONS[code].label + ', e nenhum item do seu carrinho participa.', 'error');
+
+  btn.disabled = true;
+  var data = null;
+  try{
+    if(typeof sb === 'undefined' || !sb) throw new Error('sem conexão com o servidor');
+    await syncCartWithCatalog();                       // preços e endereços atuais dos itens
+    var res = await sb.rpc('get_coupon', { p_code: code });
+    if(res.error) throw res.error;
+    data = res.data;
+  } catch(e){
+    btn.disabled = false;
+    setCouponMsg('Não foi possível validar o cupom agora. Tente de novo em instantes.', 'error');
+    return;
+  }
+  btn.disabled = false;
+
+  if(!data || !data.prices){ setCouponMsg('Cupom inválido ou expirado.', 'error'); return; }
+  appliedCouponData = data;
+  if(!couponAppliesToCart()){
+    appliedCouponData = null;
+    setCouponMsg('Este cupom não vale para os produtos do seu carrinho.', 'error');
     return;
   }
 
-  appliedCoupon = code;
-  input.value = code;
+  appliedCoupon = data.code;
+  input.value = data.code;
   input.disabled = true;
-  document.getElementById('couponApplyBtn').textContent = 'Remover';
+  btn.textContent = 'Remover';
   renderModalSummary();
-  setCouponMsg('Cupom ' + code + ' aplicado! Você economiza ' + formatBRL(cartDiscount()) + '.', 'ok');
+  setCouponMsg('Cupom ' + data.code + ' aplicado! Você economiza ' + formatBRL(cartDiscount()) + '.', 'ok');
 }
 
 function removeCoupon(){
   appliedCoupon = null;
+  appliedCouponData = null;
   var input = document.getElementById('couponInput');
   if(input){ input.disabled = false; input.value = ''; }
   var btn = document.getElementById('couponApplyBtn');
@@ -606,13 +635,51 @@ function removeCoupon(){
 // chamado ao abrir o checkout: se o carrinho mudou e o cupom não vale mais, remove
 function refreshCouponUI(){
   if(!appliedCoupon) return;
-  if(!couponAppliesToCart(appliedCoupon)){
+  if(!couponAppliesToCart()){
     removeCoupon();
     setCouponMsg('O cupom foi removido porque nenhum item do carrinho participa dele.', 'error');
   } else {
     setCouponMsg('Cupom ' + appliedCoupon + ' aplicado! Você economiza ' + formatBRL(cartDiscount()) + '.', 'ok');
   }
 }
+
+// ---------- carrinho x catálogo ----------
+// Confere os itens do carrinho com o catálogo atual: atualiza preços que mudaram no
+// painel e tira o que saiu do ar ou esgotou. É só para a tela mostrar o valor certo —
+// o servidor sempre confere de novo quando o pedido é enviado.
+async function syncCartWithCatalog(){
+  if(typeof sb === 'undefined' || !sb || typeof sb.from !== 'function' || cart.length === 0) return;
+  try{
+    var res = await sb.from('products')
+      .select('slug,price,sold_out,product_variants(cart_id,price,sold_out)')
+      .eq('active', true);
+    if(!res || res.error || !res.data) return;
+
+    var map = {};
+    res.data.forEach(function(p){
+      map[p.slug] = { slug: p.slug, price: Number(p.price), sold_out: !!p.sold_out };
+      (p.product_variants || []).forEach(function(v){
+        map[v.cart_id] = { slug: p.slug, price: v.price != null ? Number(v.price) : Number(p.price), sold_out: !!p.sold_out || !!v.sold_out };
+      });
+    });
+
+    var changed = false, removed = 0;
+    cart = cart.filter(function(i){
+      if(String(i.id).indexOf('custom-') === 0) return true;     // terços personalizados: preços do configurador
+      var e = map[String(i.id).split('--')[0]];
+      if(!e || e.sold_out){ removed++; return false; }
+      if(e.price !== i.price){ i.price = e.price; changed = true; }
+      if(i.slug !== e.slug){ i.slug = e.slug; changed = true; }
+      return true;
+    });
+    if(changed || removed){
+      renderCart();
+      if(document.getElementById('modalSummary')) renderModalSummary();
+      if(removed) showToast('Alguns itens saíram do carrinho porque não estão mais disponíveis.');
+    }
+  } catch(e){ /* sem conexão: segue com o que está na tela */ }
+}
+syncCartWithCatalog();
 
 function renderCart(){
   saveCart();
@@ -633,9 +700,9 @@ function renderCart(){
 
   body.innerHTML = cart.map(function(i){
     return '<div class="cart-item">' +
-      '<img src="' + i.img + '" alt="' + i.name + '">' +
+      '<img src="' + escHtml(i.img) + '" alt="' + escHtml(i.name) + '">' +
       '<div>' +
-        '<h5>' + i.name + '</h5>' +
+        '<h5>' + escHtml(i.name) + '</h5>' +
         '<div class="cart-item-price">' + formatBRL(i.price) + '</div>' +
         '<div class="mini-stepper">' +
           '<button onclick="changeCartQty(\'' + i.id + '\',-1)">–</button>' +
@@ -665,6 +732,7 @@ function openCheckout(){
   if(cart.length === 0) return;
   refreshCouponUI();
   renderModalSummary();
+  syncCartWithCatalog();
   closeDrawer();
   showCheckoutForm();
   checkoutOverlay.classList.add('show');
@@ -699,7 +767,7 @@ function renderModalSummary(){
     var line = unit < i.price
       ? '<span class="old">' + formatBRL(i.price*i.qty) + '</span>' + formatBRL(unit*i.qty)
       : formatBRL(i.price*i.qty);
-    return '<div class="row"><span>' + i.qty + '× ' + i.name + '</span><span>' + line + '</span></div>';
+    return '<div class="row"><span>' + i.qty + '× ' + escHtml(i.name) + '</span><span>' + line + '</span></div>';
   }).join('');
 
   var discount = cartDiscount();
@@ -811,26 +879,27 @@ renderCart();
 // Adds straight to the cart without opening the product page. Works for
 // any number of `.catalog-card[data-product-id]` cards, same pattern as
 // the full product-card handler above.
-document.querySelectorAll('.catalog-card[data-product-id]').forEach(function(card){
-  var btn = card.querySelector('.catalog-cart-btn');
+document.addEventListener('click', function(e){
+  var btn = e.target.closest ? e.target.closest('.catalog-cart-btn') : null;
   if(!btn) return;
-  btn.addEventListener('click', function(e){
-    e.preventDefault();
-    var id = card.dataset.productId;
-    var name = card.dataset.productName;
-    var price = parseFloat(card.dataset.productPrice);
-    var img = card.dataset.productImg;
+  var card = btn.closest('.catalog-card[data-product-id]');
+  if(!card) return;
+  e.preventDefault();
+  var id = card.dataset.productId;
+  var name = card.dataset.productName;
+  var price = parseFloat(card.dataset.productPrice);
+  var img = card.dataset.productImg;
+  var slug = card.dataset.productSlug || id;
 
-    var existing = cart.find(function(i){ return i.id === id; });
-    if(existing){ existing.qty += 1; }
-    else { cart.push({ id: id, name: name, price: price, img: img, qty: 1 }); }
+  var existing = cart.find(function(i){ return i.id === id; });
+  if(existing){ existing.qty += 1; }
+  else { cart.push({ id: id, slug: slug, name: name, price: price, img: img, qty: 1 }); }
 
-    renderCart();
-    showToast('Adicionado ao carrinho');
+  renderCart();
+  showToast('Adicionado ao carrinho');
 
-    btn.classList.add('added');
-    setTimeout(function(){ btn.classList.remove('added'); }, 1400);
-  });
+  btn.classList.add('added');
+  setTimeout(function(){ btn.classList.remove('added'); }, 1400);
 });
 
 // ---------- theme toggle (light / dark) ----------

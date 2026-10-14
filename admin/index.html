@@ -45,6 +45,8 @@
   <main>
     <div class="admin-tabs" id="adminTabs">
       <button class="admin-tab active" data-tab="pedidos">Pedidos</button>
+      <button class="admin-tab" data-tab="produtos">Produtos</button>
+      <button class="admin-tab" data-tab="cupons">Cupons</button>
       <button class="admin-tab" data-tab="calculadora">Calculadora de Preço</button>
     </div>
 
@@ -84,6 +86,25 @@
       </table>
       <div class="empty-state" id="emptyState" style="display:none;">Nenhum pedido encontrado.</div>
     </div>
+    </div>
+
+    <div class="tab-panel" id="tabProdutos">
+      <div class="toolbar">
+        <input type="text" class="search-box" id="prodSearch" placeholder="Buscar produto...">
+        <button class="btn-primary toolbar-btn" id="prodNewBtn" type="button">＋ Novo produto</button>
+      </div>
+      <p class="tab-hint">Tudo que você muda aqui aparece no site em até 1 minuto — sem precisar mexer em código.</p>
+      <div class="prod-list" id="prodList"><!-- filled by produtos.js --></div>
+      <div class="empty-state" id="prodEmpty" style="display:none;">Nenhum produto encontrado.</div>
+    </div>
+
+    <div class="tab-panel" id="tabCupons">
+      <div class="toolbar">
+        <span class="tab-hint" style="margin:0;">Cupons de desconto com preço especial por produto.</span>
+        <button class="btn-primary toolbar-btn" id="cupNewBtn" type="button">＋ Novo cupom</button>
+      </div>
+      <div class="prod-list" id="cupList"><!-- filled by cupons.js --></div>
+      <div class="empty-state" id="cupEmpty" style="display:none;">Nenhum cupom criado ainda.</div>
     </div>
 
     <div class="tab-panel" id="tabCalculadora">
@@ -202,11 +223,39 @@
   <div class="detail-body" id="detailBody"><!-- filled by admin.js --></div>
 </aside>
 
+<!-- ============ Product editor panel ============ -->
+<div class="detail-overlay" id="prodOverlay"></div>
+<aside class="detail-panel editor-panel" id="prodPanel">
+  <div class="detail-head">
+    <div>
+      <h2 id="prodPanelTitle">Novo produto</h2>
+      <span class="admin-email" id="prodPanelSub"></span>
+    </div>
+    <button class="detail-close" id="prodPanelClose" type="button">✕</button>
+  </div>
+  <div class="detail-body" id="prodPanelBody"><!-- filled by produtos.js --></div>
+</aside>
+
+<!-- ============ Coupon editor panel ============ -->
+<div class="detail-overlay" id="cupOverlay"></div>
+<aside class="detail-panel editor-panel" id="cupPanel">
+  <div class="detail-head">
+    <div>
+      <h2 id="cupPanelTitle">Novo cupom</h2>
+      <span class="admin-email" id="cupPanelSub"></span>
+    </div>
+    <button class="detail-close" id="cupPanelClose" type="button">✕</button>
+  </div>
+  <div class="detail-body" id="cupPanelBody"><!-- filled by cupons.js --></div>
+</aside>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/supabase-client.js"></script>
 <script src="/admin/js/admin.js"></script>
 <script src="/admin/js/calculadora.js"></script>
+<script src="/admin/js/produtos.js"></script>
+<script src="/admin/js/cupons.js"></script>
 </body>
 </html>
