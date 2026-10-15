@@ -45,8 +45,10 @@
   <main>
     <div class="admin-tabs" id="adminTabs">
       <button class="admin-tab active" data-tab="pedidos">Pedidos</button>
+      <button class="admin-tab" data-tab="vendas">Vendas</button>
       <button class="admin-tab" data-tab="produtos">Produtos</button>
       <button class="admin-tab" data-tab="cupons">Cupons</button>
+      <button class="admin-tab" data-tab="carrossel">Carrossel</button>
       <button class="admin-tab" data-tab="calculadora">Calculadora de Preço</button>
     </div>
 
@@ -86,6 +88,40 @@
       </table>
       <div class="empty-state" id="emptyState" style="display:none;">Nenhum pedido encontrado.</div>
     </div>
+    </div>
+
+    <div class="tab-panel" id="tabVendas">
+      <div class="toolbar sales-toolbar">
+        <select id="salesPeriod" class="sales-select">
+          <option value="mes">Este mês</option>
+          <option value="mes_passado">Mês passado</option>
+          <option value="7d">Últimos 7 dias</option>
+          <option value="30d">Últimos 30 dias</option>
+          <option value="90d">Últimos 90 dias</option>
+          <option value="ano">Este ano</option>
+          <option value="tudo">Todo o período</option>
+        </select>
+        <label class="ed-check"><input type="checkbox" id="salesPaidOnly" checked><span>Só pedidos pagos</span></label>
+        <label class="ed-check"><input type="checkbox" id="salesSplit"><span>Separar por cor/modelo</span></label>
+        <button class="mini-btn" id="salesExport" type="button">⬇ Baixar planilha (CSV)</button>
+      </div>
+      <p class="tab-hint" id="salesNote"></p>
+      <div class="stats-grid" id="salesKpis"><!-- filled by vendas.js --></div>
+      <div class="card"><h4 id="salesChartTitle">Faturamento</h4><div id="salesChart"></div></div>
+      <div class="sales-cols">
+        <div class="card"><h4>Produtos mais vendidos</h4><div id="salesProducts"></div></div>
+        <div class="card"><h4>Entremeios mais pedidos</h4><div id="salesEntremeios"></div></div>
+      </div>
+      <div class="card"><h4>Cupons</h4><div id="salesCoupons"></div></div>
+    </div>
+
+    <div class="tab-panel" id="tabCarrossel">
+      <div class="toolbar">
+        <span class="tab-hint" style="margin:0;">Os slides que passam no topo da home.</span>
+        <button class="btn-primary toolbar-btn" id="slideNewBtn" type="button">＋ Novo slide</button>
+      </div>
+      <div class="prod-list" id="slideList"><!-- filled by carrossel.js --></div>
+      <div class="empty-state" id="slideEmpty" style="display:none;">Nenhum slide. Com a lista vazia o carrossel some da home.</div>
     </div>
 
     <div class="tab-panel" id="tabProdutos">
@@ -249,6 +285,19 @@
   <div class="detail-body" id="cupPanelBody"><!-- filled by cupons.js --></div>
 </aside>
 
+<!-- ============ Slide editor panel ============ -->
+<div class="detail-overlay" id="slideOverlay"></div>
+<aside class="detail-panel editor-panel" id="slidePanel">
+  <div class="detail-head">
+    <div>
+      <h2 id="slidePanelTitle">Novo slide</h2>
+      <span class="admin-email" id="slidePanelSub"></span>
+    </div>
+    <button class="detail-close" id="slidePanelClose" type="button">✕</button>
+  </div>
+  <div class="detail-body" id="slidePanelBody"><!-- filled by carrossel.js --></div>
+</aside>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -257,5 +306,7 @@
 <script src="/admin/js/calculadora.js"></script>
 <script src="/admin/js/produtos.js"></script>
 <script src="/admin/js/cupons.js"></script>
+<script src="/admin/js/vendas.js"></script>
+<script src="/admin/js/carrossel.js"></script>
 </body>
 </html>

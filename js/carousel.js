@@ -11,22 +11,32 @@
   if(!track) return; // section not on this page
 
   const viewport = track.parentElement;
-  const slides = Array.from(track.children);
+  let slides = [];
+  let dots = [];
   const dotsWrap = document.getElementById('carouselDots');
 
   let index = 0;
   let autoplayTimer = null;
   const AUTOPLAY_MS = 5000;
 
-  // build the dot indicators
-  slides.forEach((_, i) => {
-    const dot = document.createElement('button');
-    dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
-    dot.setAttribute('aria-label', 'Ir para o slide ' + (i + 1));
-    dot.addEventListener('click', () => { goTo(i); restartAutoplay(); });
-    dotsWrap.appendChild(dot);
-  });
-  const dots = Array.from(dotsWrap.children);
+  // (re)lê os slides e refaz as bolinhas — também é chamado quando os slides
+  // vêm do painel (js/carrossel.js) depois que a página carrega
+  function build(){
+    slides = Array.from(track.children);
+    dotsWrap.innerHTML = '';
+    slides.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+      dot.setAttribute('aria-label', 'Ir para o slide ' + (i + 1));
+      dot.addEventListener('click', () => { goTo(i); restartAutoplay(); });
+      dotsWrap.appendChild(dot);
+    });
+    dotsWrap.style.display = slides.length > 1 ? '' : 'none';
+    dots = Array.from(dotsWrap.children);
+    index = 0;
+    render();
+    if(slides.length > 1) startAutoplay(); else stopAutoplay();
+  }
 
   function render(){
     track.style.transform = 'translateX(' + (-index * 100) + '%)';
@@ -34,6 +44,7 @@
   }
 
   function goTo(i){
+    if(!slides.length) return;
     index = (i + slides.length) % slides.length;
     render();
   }
@@ -114,12 +125,10 @@
 
   // if the pointer moved enough to count as a drag, swallow the click so
   // the slide's <a href> doesn't navigate accidentally mid-swipe
-  slides.forEach(slide => {
-    slide.addEventListener('click', e => {
-      if(dragMoved) e.preventDefault();
-    });
+  track.addEventListener('click', e => {
+    if(dragMoved) e.preventDefault();
   });
 
-  render();
-  startAutoplay();
+  build();
+  window.PDMCarousel = { rebuild: build };
 })();

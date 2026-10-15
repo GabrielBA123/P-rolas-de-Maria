@@ -31,6 +31,8 @@ perolas-app/
 │   ├── supabase-client.js     → onde você cola a URL + chave do Supabase
 │   ├── product-render.js      → monta cards e páginas de produto (site + servidor)
 │   ├── catalogo.js            → vitrine da home (lê os produtos do banco)
+│   ├── carousel.js            → movimento do carrossel (arrastar, bolinhas, automático)
+│   ├── carrossel.js           → monta os slides do carrossel a partir do banco
 │   ├── main.js                → carrinho, galeria, cupom, personalizador, tema
 │   └── checkout.js            → salva o pedido no banco + abre o WhatsApp
 ├── assets/images/             → fotos antigas dos produtos
@@ -41,10 +43,13 @@ perolas-app/
 │       ├── admin.js           → pedidos (+ botões de WhatsApp)
 │       ├── produtos.js        → aba Produtos
 │       ├── cupons.js          → aba Cupons
+│       ├── vendas.js          → aba Vendas (números, gráfico, planilha)
+│       ├── carrossel.js       → aba Carrossel
 │       └── calculadora.js     → calculadora de preço e estoque
 ├── sql/
 │   ├── schema.sql             → tudo para criar o banco do zero (= schema-completo.sql)
 │   ├── catalogo.sql           → só a parte do catálogo (para banco que já existe)
+│   ├── extras.sql             → carrossel editável
 │   └── historico/             → migrações antigas (já aplicadas, não rode de novo)
 ├── vercel.json                → endereços, redirecionamentos antigos e segurança
 └── README.md                  → este arquivo
@@ -191,6 +196,23 @@ pedidos.
 dia) e o **preço especial de cada produto**. Um cupom novo funciona na hora.
 Em produto com opções, o cupom vale para todas as opções.
 
+**Vendas** (aba **Vendas**): escolha o período (este mês, mês passado, 7/30/90
+dias, este ano, tudo) e veja faturamento, pedidos, ticket médio, itens
+vendidos, descontos de cupom e quanto ainda está **a receber**; gráfico de
+faturamento por dia (ou por mês nos períodos longos); produtos e entremeios
+mais vendidos; uso de cada cupom. Por padrão só conta pedidos **pagos**
+(pago, em preparação, enviado, entregue) — desmarque "Só pedidos pagos" para
+incluir os aguardando pagamento. Pedidos cancelados nunca entram. O botão
+**Baixar planilha (CSV)** exporta os pedidos do período (abre direto no Excel
+e no Google Planilhas). As datas seguem o horário de Brasília.
+
+**Carrossel** (aba **Carrossel**): edite os slides do topo da home — título,
+frase, etiqueta, texto do link, para onde leva (lista de produtos, página de um
+produto, personalizados ou um https://), ordem e visível/oculto. A imagem você
+escolhe entre as fotos que o site já tem; enviar foto nova é opcional. Sem
+nenhum slide visível, o carrossel some da home. Se você citar preço no texto do
+slide, atualize quando o preço mudar.
+
 **Pedidos:** no detalhe do pedido, **"Falar com a cliente"** abre o WhatsApp
 com mensagem pronta (cobrar Pix, pagamento recebido, em preparação, enviado
 com rastreio, entregue).
@@ -202,13 +224,32 @@ regra no SQL (6mm R$ 19,90 / com nome R$ 22,90 · 8mm R$ 24,90 / com nome
 R$ 26,90 · só pérolas R$ 29,90); se mudar no `js/main.js`, mude também em
 `create_order()` no SQL.
 
+### Google Search Console
+
+1. Acesse **search.google.com/search-console** e entre com sua conta Google.
+2. **Adicionar propriedade** → escolha **Prefixo do URL** e digite
+   `https://perolas-de-maria.vercel.app/`.
+3. Em verificação, escolha **Tag HTML** e copie a linha
+   `<meta name="google-site-verification" content="...">`.
+4. Cole essa linha no `index.html`, logo abaixo do comentário
+   "Google Search Console" (no começo do arquivo), suba para o GitHub, espere a
+   Vercel publicar e clique em **Verificar**.
+5. No menu **Sitemaps**, envie `sitemap.xml`. Ele já lista a home e todos os
+   produtos ativos sozinho (as mudanças do painel entram nele).
+6. Depois de alguns dias, em **Desempenho** você vê por quais buscas o site
+   aparece. Para um produto novo aparecer mais rápido, use **Inspeção de URL**
+   → **Solicitar indexação**.
+
 **Cuidados**
 - O site depende do Supabase estar acordado (plano gratuito pausa após ~7 dias
   parado). O ping automático em `.github/workflows` evita isso.
 - O carrossel do topo da home (`index.html`) continua manual; se ele cita preço,
   atualize o texto quando mudar o preço no painel.
+- O painel de Vendas e a planilha usam os pedidos carregados no painel (o
+  Supabase entrega até 1.000 pedidos por vez; passando disso, avise para
+  ajustarmos).
 - Instalar do zero: rode `sql/schema.sql`. Já tem banco funcionando: rode
-  só `sql/catalogo.sql` (cadastra os produtos atuais na 1ª vez e não
+  só `sql/catalogo.sql` e `sql/extras.sql` (cadastra os produtos atuais na 1ª vez e não
   sobrescreve o que você editar depois).
 
 ---
